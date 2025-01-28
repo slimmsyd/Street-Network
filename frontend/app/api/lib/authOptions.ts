@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/app/api/models/User';
 
@@ -41,7 +41,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error('No user found with this email');
           }
 
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          const isPasswordValid = await bcryptjs.compare(credentials.password, user.password);
           if (!isPasswordValid) {
             throw new Error('Invalid password');
           }
