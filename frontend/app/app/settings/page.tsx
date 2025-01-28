@@ -444,39 +444,52 @@ export default function Dashboard() {
       if (data.success) {
         const gridFsUrl = `/api/images/${data.fileId}`;
 
+        // Determine which endpoint to use based on available credentials
+        let endpoint;
+        if (userDetails.user.walletAddress) {
+          endpoint = `/api/users/wallet/${encodeURIComponent(userDetails.user.walletAddress)}`;
+        } else if (userDetails.user.email) {
+          endpoint = `/api/users/email/${encodeURIComponent(userDetails.user.email)}`;
+        } else {
+          throw new Error("No authentication method available");
+        }
+
         // Update user's profile in database with all existing fields plus new image URL
-        const updateResponse = await fetch(
-          `/api/users/${userDetails.user.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ...userDetails.user, // Keep all existing user details
-              profileImage: gridFsUrl, // Update with new GridFS URL
-              profileImageId: data.fileId,
-            }),
-          }
-        );
+        const updateResponse = await fetch(endpoint, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...userDetails.user,
+            profileImage: gridFsUrl,
+            profileImageId: data.fileId,
+          }),
+        });
 
         if (!updateResponse.ok) {
           throw new Error("Failed to update profile image");
         }
 
-        // Fetch fresh user details to ensure we have the latest data
-        await fetchUserDetails();
+        const updateData = await updateResponse.json();
+        if (updateData.success) {
+          // Fetch fresh user details to ensure we have the latest data
+          await fetchUserDetails();
 
-        // Set as selected image in the grid
-        setSelectedImage(data.fileId);
+          // Set as selected image in the grid
+          setSelectedImage(data.fileId);
 
-        // Refresh the images list
-        refreshImages();
+          // Refresh the images list
+          refreshImages();
+        } else {
+          throw new Error(updateData.error || "Failed to update profile image");
+        }
       } else {
-        console.error("Failed to upload image:", data.error);
+        throw new Error(data.error || "Failed to upload image");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
+      alert(error instanceof Error ? error.message : "Failed to upload image");
     } finally {
       setIsImageUploading(false);
     }
