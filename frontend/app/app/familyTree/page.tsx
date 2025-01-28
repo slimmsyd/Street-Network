@@ -41,9 +41,25 @@ export default function FamilyTreePage() {
     setIsLoading(true);
     try {
       const email = session?.user?.email;
-      const response = await fetch(
-        `/api/users/email/${encodeURIComponent(email as string)}`
-      );
+      const walletAddress = session?.user?.walletAddress;
+
+      if (!email && !walletAddress) {
+        console.log("No authentication credentials found");
+        setIsLoading(false);
+        return;
+      }
+
+      // Determine which endpoint to use based on available credentials
+      let endpoint;
+      if (walletAddress) {
+        endpoint = `/api/users/wallet/${encodeURIComponent(walletAddress)}`;
+      } else if (email) {
+        endpoint = `/api/users/email/${encodeURIComponent(email)}`;
+      } else {
+        throw new Error("No authentication method available");
+      }
+
+      const response = await fetch(endpoint);
       const data = await response.json();
 
       if (data.success) {
@@ -55,7 +71,8 @@ export default function FamilyTreePage() {
           exists: false,
           user: {
             id: "",
-            email,
+            email: email || "",
+            walletAddress: walletAddress || "",
             name: "User",
             milestones: [],
           },

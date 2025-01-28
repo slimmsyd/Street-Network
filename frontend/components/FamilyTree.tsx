@@ -9,6 +9,7 @@ interface TreeNode extends SimulationNodeDatum {
   id: string;
   name: string;
   email: string;
+  walletAddress?: string;
   profileImage?: string;
   familyRole?: string;
   gender?: string;
@@ -24,6 +25,7 @@ interface TreeNode extends SimulationNodeDatum {
     id: string;
     name: string;
     email: string;
+    walletAddress?: string;
     profileImage: string;
     familyRole: string;
     gender: string;
@@ -78,35 +80,18 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
   useEffect(() => {
     const fetchAllUsers = async () => {
       try {
-        console.log('Starting fetchAllUsers with session:', session);
-        
-        // Get current user's data based on available authentication method
-        let currentUser;
-        if (session?.user?.email) {
-          console.log('Fetching current user by email:', session.user.email);
-          const userResponse = await fetch(`/api/users/email/${session.user.email}`);
-          const userData = await userResponse.json();
-          if (userData.success) {
-            currentUser = userData.user;
-          }
-        } else if (session?.user?.walletAddress) {
-          console.log('Fetching current user by wallet:', session.user.walletAddress);
-          const userResponse = await fetch(`/api/users/wallet/${session.user.walletAddress}`);
-          const userData = await userResponse.json();
-          if (userData.success) {
-            currentUser = userData.user;
-          }
+        setIsLoading(true);
+
+        // Get current user first
+        const email = session?.user?.email;
+        const walletAddress = session?.user?.walletAddress;
+
+        if (!email && !walletAddress) {
+          console.log("No authentication credentials found");
+          return;
         }
 
-        if (currentUser) {
-          console.log('Current user found:', currentUser);
-          setCurrentUserId(currentUser._id);
-        } else {
-          console.log('No current user found, proceeding with all users fetch');
-        }
-
-        // Fetch all users regardless of current user status
-        console.log('Starting fetch for all users...');
+        // Fetch all users
         const allUsersResponse = await fetch('/api/users/all');
         const allUsersData = await allUsersResponse.json();
         console.log('All users response:', allUsersData);
@@ -122,6 +107,7 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
           id: user._id,
           name: user.name || 'Unknown User',
           email: user.email,
+          walletAddress: user.walletAddress,
           profileImage: user.profileImage,
           familyRole: user.familyRole || 'Member',
           gender: user.gender,
@@ -133,42 +119,34 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
           y: 0
         }));
 
-        console.log('Final tree nodes created:', treeNodes.length);
-
-        // Create links between all nodes
-        const treeLinks: TreeLink[] = [];
-        
-        // Connect each node to its nearest neighbors
-        for (let i = 0; i < treeNodes.length; i++) {
-          for (let j = i + 1; j < treeNodes.length; j++) {
-            treeLinks.push({
-              source: treeNodes[i],
-              target: treeNodes[j],
-              type: 'connection',
-              confirmed: true
-            });
-          }
+        // Set current user ID
+        const currentUser = treeNodes.find(node => 
+          (email && node.email === email) || 
+          (walletAddress && node.walletAddress === walletAddress)
+        );
+        if (currentUser) {
+          setCurrentUserId(currentUser.id);
         }
 
-        console.log('Tree links created:', {
-          totalLinks: treeLinks.length,
-          sampleLink: treeLinks[0]
+        // Create links between related nodes only
+        const treeLinks: TreeLink[] = [];
+        treeNodes.forEach(node => {
+          node.relationships.forEach(rel => {
+            const targetNode = treeNodes.find(n => n.id === rel.relatedUserId);
+            if (targetNode) {
+              treeLinks.push({
+                source: node,
+                target: targetNode,
+                type: rel.relationship,
+                confirmed: rel.confirmed
+              });
+            }
+          });
         });
 
-        // Update the simulation with the new nodes and links
+        // Update state
         setNodes(treeNodes);
         setLinks(treeLinks);
-
-        // Log the final data structure
-        console.log('Final data structure:', {
-          nodes: treeNodes.map(n => ({ id: n.id, name: n.name })),
-          links: treeLinks.map(l => ({
-            source: (l.source as TreeNode).name,
-            target: (l.target as TreeNode).name,
-            type: l.type
-          }))
-        });
-
         setIsLoading(false);
 
       } catch (error) {
@@ -177,7 +155,9 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
       }
     };
 
-    fetchAllUsers();
+    if (session) {
+      fetchAllUsers();
+    }
   }, [session]);
 
   useEffect(() => {
@@ -606,6 +586,7 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
               id: data.user.id,
               name: data.user.name,
               email: data.user.email,
+              walletAddress: data.user.walletAddress,
               profileImage: data.user.profileImage,
               familyRole: data.user.familyRole,
               gender: data.user.gender,
