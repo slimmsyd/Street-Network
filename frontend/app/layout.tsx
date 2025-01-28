@@ -18,8 +18,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export const metadata: Metadata = {
-  title: 'Kinnected',
-  description: `Kinnected is a platform that allows you to create a family tree and share it with your loved ones.`,
+  title: 'Street Network',
+  description: `Street Network showcasing the network of your street.`,
 };
 
 export default function RootLayout({
