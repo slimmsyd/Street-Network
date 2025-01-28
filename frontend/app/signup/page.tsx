@@ -544,7 +544,7 @@ export default function SignUpPage() {
           </div>
           <div className="absolute inset-0 flex items-center justify-center p-12">
             <Image
-              src="/assets/AiRobotNo.png"
+              src="/assets/Earth.png"
               alt="Decorative illustration"
               width={400}
               height={400}

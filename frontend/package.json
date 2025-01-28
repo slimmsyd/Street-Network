@@ -8,9 +8,7 @@
     "build": "next build && prisma generate",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
-    "generate-wallet": "ts-node --project scripts/tsconfig.json scripts/generate-wallet.ts",
-    "test-wallet": "ts-node --project scripts/tsconfig.json scripts/test-wallet.ts"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ardrive/turbo-sdk": "^1.22.0",
