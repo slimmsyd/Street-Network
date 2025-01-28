@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/app/api/models/User';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     // Hash password if provided
     let hashedPassword = undefined;
     if (password) {
-      hashedPassword = await bcrypt.hash(password, 12);
+      hashedPassword = await bcryptjs.hash(password, 10);
     }
 
     // Create new user
