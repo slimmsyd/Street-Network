@@ -655,6 +655,23 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const discordStatus = params.get('discord');
+    
+    if (discordStatus === 'success') {
+      alert('Discord account connected successfully!');
+      // Remove the query parameter
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refresh user details
+      fetchUserDetails();
+    } else if (discordStatus === 'error') {
+      alert('Failed to connect Discord account. Please try again.');
+      // Remove the query parameter
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   if (!mounted) {
     return null; // or loading spinner
   }
@@ -1273,20 +1290,38 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <Label htmlFor="discordTag" className="text-zinc-600">
-                        Discord Username
+                        Discord Account
                       </Label>
-                    <Input
-                        id="discordTag"
-                        defaultValue={userDetails?.user?.discordTag || ""}
-                      disabled={!isEditMode}
-                        placeholder="e.g. username or username#1234"
-                        onChange={(e) => handleInputChange("discordTag", e.target.value)}
-                        className="mt-1.5 border-[#DDDDDD] bg-white text-black border-[0.5px] focus:ring-[#3B35C3] focus:border-[#3B35C3] disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-                    />
-                      <p className="mt-1 text-sm text-zinc-500">
-                        Enter your Discord username (with or without the #tag)
+                      <div className="mt-1.5 flex items-center justify-between gap-4">
+                        <Input
+                          id="discordTag"
+                          value={userDetails?.user?.discordTag || "Not connected"}
+                          disabled
+                          className="flex-1 border-[#DDDDDD] bg-gray-50 text-gray-500"
+                        />
+                        <Button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/auth/discord');
+                              const data = await response.json();
+                              if (data.success) {
+                                window.location.href = data.url;
+                              } else {
+                                console.error('Failed to get Discord auth URL:', data.error);
+                              }
+                            } catch (error) {
+                              console.error('Error initiating Discord connection:', error);
+                            }
+                          }}
+                          className="bg-[#5865F2] text-white hover:bg-[#4752C4]"
+                        >
+                          {userDetails?.user?.discordTag ? 'Reconnect Discord' : 'Connect Discord'}
+                        </Button>
+                      </div>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        Connect your Discord account to participate in the community.
                       </p>
-                  </div>
+                    </div>
                   </Card>
                 </div>
 

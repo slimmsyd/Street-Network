@@ -87,14 +87,39 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true // Allows null/undefined values while maintaining uniqueness
   },
+  discordId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   discordTag: {
     type: String,
-    required: false,
-    match: [
-      /^.{3,32}#[0-9]{4}$|^.{2,32}$/, // Matches both old #tag and new username format
-      'Please enter a valid Discord tag'
-    ]
+    unique: true,
+    sparse: true
   },
+  discordEmail: {
+    type: String,
+    sparse: true
+  },
+  discordAvatarUrl: {
+    type: String,
+    sparse: true
+  },
+  discordGuilds: [{
+    id: String,
+    name: String,
+    icon: String,
+    owner: Boolean,
+    permissions: String
+  }],
+  discordConnections: [{
+    type: String,
+    id: String,
+    name: String,
+    visibility: Boolean,
+    verified: Boolean,
+    revoked: Boolean
+  }],
   password: {
     type: String,
     required: false // Optional because of Google sign in and wallet auth
