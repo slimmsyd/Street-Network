@@ -30,7 +30,7 @@ interface Route {
 const routes: Route[] = [
   {
     href: "#product",
-    label: "Resources",
+    label: "",
   },
   // {
   //   href: "#reason", 
@@ -148,7 +148,7 @@ export default function Navbar() {
         <div className="mr-8 inline-flex items-center gap-2">
           <Link href="/" className="flex text-black items-center space-x-2">
             <Image src="/assets/KinnectLogo.png" alt="Product" width={68} height={68} />
-            <span className="font-bold hidden md:inline !text-[12px]">Kinnected</span>
+            <span className="font-bold hidden md:inline !text-[12px]">Street Networks</span>
           </Link>
         </div>
 
@@ -230,7 +230,7 @@ export default function Navbar() {
                         <span className="
                         !text-[12px]
                         relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
-                          Sign up for beta
+                          Build Ya Street
                         </span>
                         <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
                       </button>
@@ -350,7 +350,7 @@ export default function Navbar() {
             </span>
             <ArrowRight className="h-4 w-4 relative z-10 text-black transition-transform duration-500 group-hover:translate-x-1" />
           </button> */}
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog>
             <DialogTrigger asChild>
               <button
                 className="text-sm font-medium text-white transition-all duration-500 flex items-center gap-2 px-6 py-2.5 rounded-full relative overflow-hidden group transform hover:scale-[1.02]"
@@ -365,9 +365,9 @@ export default function Navbar() {
                 <span className="
                 !text-[12px]
                 relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
-                  Sign up for beta
+                  Build Ya Street
                 </span>
-                <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
+                {/* <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" /> */}
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

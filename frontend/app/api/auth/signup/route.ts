@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (!email && !walletAddress) {
       return NextResponse.json({ 
         success: false, 
-        message: 'Either email or wallet address is required' 
+        error: 'Either email or wallet address is required' 
       }, { status: 400 });
     }
 
@@ -31,11 +31,37 @@ export async function POST(request: Request) {
       ]
     });
 
+    // If user exists, handle the case differently based on auth method
     if (existingUser) {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'User already exists' 
-      }, { status: 400 });
+      // For wallet-based auth, return success with existing user
+      if (walletAddress && existingUser.walletAddress === walletAddress) {
+        return NextResponse.json({ 
+          success: true, 
+          user: {
+            id: existingUser._id,
+            email: existingUser.email,
+            name: existingUser.name,
+            walletAddress: existingUser.walletAddress,
+            familyRole: existingUser.familyRole
+          }
+        });
+      }
+      
+      // For email-based auth, return error
+      if (email && existingUser.email === email) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'An account with this email already exists. Please log in instead.' 
+        }, { status: 400 });
+      }
+
+      // For wallet-based auth with different wallet
+      if (walletAddress) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'This wallet is already associated with an account. Please use a different wallet or log in.' 
+        }, { status: 400 });
+      }
     }
 
     // Hash password if provided
@@ -57,7 +83,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'User created successfully',
       user: {
         id: user._id,
         email: user.email,
@@ -67,10 +92,10 @@ export async function POST(request: Request) {
       }
     });
   } catch (error: any) {
-    console.error('Error creating user:', error);
+    console.error('Error in signup:', error);
     return NextResponse.json({ 
       success: false, 
-      message: error.message || 'Failed to create user' 
+      error: error.message || 'An unexpected error occurred during signup' 
     }, { status: 500 });
   }
 } 

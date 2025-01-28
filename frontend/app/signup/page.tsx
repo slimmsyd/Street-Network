@@ -123,7 +123,6 @@ export default function SignUpPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    console.log("Starting signup process with form data:", formData);
 
     try {
       // For wallet-only signup, we don't need email/password validation
@@ -140,7 +139,6 @@ export default function SignUpPage() {
         return;
       }
 
-      console.log("Creating user account...");
       // Create user account
       const signupResponse = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -153,12 +151,10 @@ export default function SignUpPage() {
         })
       });
 
-      console.log("Signup response status:", signupResponse.status);
       const signupData = await signupResponse.json();
       console.log("Signup data received:", signupData);
 
       if (!signupData.success) {
-        console.error("Signup failed:", signupData.error);
         setError(signupData.error || 'Failed to create account');
         setIsLoading(false);
         return;
@@ -166,21 +162,14 @@ export default function SignUpPage() {
 
       // If there's an invitation, accept it
       if (invitation) {
-        console.log("Processing invitation acceptance...");
-        const token = searchParams.get('invitation');
-        console.log("Invitation token:", token);
-        
         try {
-          const acceptResponse = await fetch(`/api/invitations/accept/${token}`, {
+          const acceptResponse = await fetch(`/api/invitations/accept/${searchParams.get('invitation')}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: signupData.user.id })
           });
 
-          console.log("Invitation accept response status:", acceptResponse.status);
           const acceptData = await acceptResponse.json();
-          console.log("Invitation accept data:", acceptData);
-          
           if (!acceptData.success) {
             console.error('Failed to accept invitation:', acceptData.error);
           }
@@ -189,63 +178,29 @@ export default function SignUpPage() {
         }
       }
 
-      console.log("Proceeding with authentication...");
-      // Sign in the user - handle both wallet and credential auth
-      if (formData.walletAddress) {
-        // For wallet auth, we need to create a session
-        const result = await signIn('credentials', {
-          walletAddress: formData.walletAddress,
-          redirect: false,
-          callbackUrl: '/app/dashboard'
-        });
+      // Sign in the user
+      const signInResult = await signIn('credentials', {
+        ...(formData.walletAddress ? { walletAddress: formData.walletAddress } : { email: formData.email, password: formData.password }),
+        redirect: false,
+        callbackUrl: '/app/dashboard'
+      });
 
-        console.log("Wallet sign in result:", result);
+      if (signInResult?.error) {
+        setError(signInResult.error);
+        setIsLoading(false);
+        return;
+      }
 
-        if (result?.error) {
-          console.error("Wallet sign in failed:", result.error);
-          setError(result.error);
-          setIsLoading(false);
-          return;
-        }
-
-        if (result?.url) {
-          console.log("Wallet signup successful, redirecting to:", result.url);
-          router.push(result.url);
-        } else {
-          console.log("No redirect URL provided, using default");
-          router.push('/app/dashboard');
-        }
+      // Redirect to dashboard
+      if (signInResult?.url) {
+        router.push(signInResult.url);
       } else {
-        // For email/password auth, proceed with credential signin
-        const result = await signIn('credentials', {
-          email: formData.email,
-          password: formData.password,
-          redirect: false,
-          callbackUrl: '/app/dashboard'
-        });
-
-        console.log("Email sign in result:", result);
-
-        if (result?.error) {
-          console.error("Sign in failed:", result.error);
-          setError(result.error);
-          setIsLoading(false);
-          return;
-        }
-
-        if (result?.url) {
-          console.log("Email signup successful, redirecting to:", result.url);
-          router.push(result.url);
-        } else {
-          console.log("No redirect URL provided, using default");
-          router.push('/app/dashboard');
-        }
+        router.push('/app/dashboard');
       }
 
     } catch (error: any) {
-      console.error("Signup process error:", error);
-      setError(error.message || 'An error occurred during signup');
-    } finally {
+      console.error("Error during signup:", error);
+      setError(error.message || 'An unexpected error occurred');
       setIsLoading(false);
     }
   };
