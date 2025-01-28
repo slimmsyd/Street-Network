@@ -1,20 +1,10 @@
-
-
-
-
 export type ResolvedAttestation = {
     name: string
     uid: string
     currAccount: string;
-  }
-  
-  declare global {
-    interface Window {
-      ethereum: any;
-    }
-  }
-  
-  export type Profile = {
+}
+
+export type Profile = {
     id?: any
     author?: {
       id: string
@@ -24,47 +14,45 @@ export type ResolvedAttestation = {
     description?: string
     gender?: string
     emoji?: string
-  }
-  
-  export type Posts = {
+}
+
+export type Posts = {
     edges: Array<{
       node: {
         body: string
         id: string
       }
     }>
-  }
-  
-  export type PostProps = { 
+}
+
+export type PostProps = { 
     profile: Profile
     body: string
     id: string
     tag?: string
     created?: string
     authorId?: string
-  }
-  
-  export type SidebarProps = {
+}
+
+export type SidebarProps = {
     name?: string
     username?: string
     id?: string
-  }
-  
-  export type Author = {
+}
+
+export type Author = {
     id: string
     name: string
     username: string
     emoji: string
-  }
-  
-  type Post = {
+}
+
+type Post = {
     body: string
     id: string
     tag?: string
     created?: string
-  }
-  
-
+}
 
 export type Session = {
   user?: {
@@ -75,7 +63,6 @@ export type Session = {
   }
   expires: string
 }
-
 
 export interface AuthOptions {
   callbacks?: {
