@@ -87,3 +87,11 @@ export const disconnect = async () => {
   localStorage.removeItem("id");
   localStorage.removeItem("robotDID");
 };
+
+export type ResolvedAttestation = {
+  name: string;
+  uid: string;
+  currAccount: string;
+};
+
+// Other utility functions and types can go here
