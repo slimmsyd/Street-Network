@@ -22,6 +22,10 @@ import {
 } from "lucide-react";
 import { DashboardSidebarProps } from "@/types/user";
 import { useSession } from "next-auth/react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   Dialog,
@@ -41,6 +45,16 @@ export function DashboardSidebar({
   rewardPoints = 0,
 }: DashboardSidebarProps) {
   const { data: session } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   const handleNavigation = (page: string) => {
     console.log("Navigation clicked", page);
     if (onNavigate) {
@@ -54,108 +68,66 @@ export function DashboardSidebar({
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  return (
-    <div className="w-64 border-r border-zinc-200 p-4 flex flex-col">
-      <div className="flex items-center gap-3 mb-6">
-        <Avatar className="h-12 w-12">
-        <AvatarImage src={userAvatar || "https://api.dicebear.com/7.x/emoji/svg"} />
-          <AvatarFallback className="bg-zinc-100 text-zinc-800">
-            {userName}
-          </AvatarFallback>
+  const SidebarContent = () => (
+    <div className="flex h-full w-full flex-col bg-white">
+      <div className="flex flex-col items-center justify-center p-6 border-b border-[#DDDDDD]">
+        <Avatar className="h-20 w-20 border-2 border-[#F0EFFF]">
+          {userAvatar ? (
+            <AvatarImage src={userAvatar} alt={userName} />
+          ) : (
+            <AvatarFallback className="bg-[#F0EFFF] text-[#3B35C3]">
+              {userName?.split(" ").map((n) => n[0]).join("") || "U"}
+            </AvatarFallback>
+          )}
         </Avatar>
-        <div>
-          <h3 className="!font-[14px] text-zinc-800">Contribution Score</h3>
-          <p className="text-sm text-[#3B35C3]">Reward Points | {}</p>
+        <h2 className="mt-4 text-lg font-semibold text-zinc-800">{userName}</h2>
+        <div className="mt-2 flex items-center gap-1">
+          <Crown className="h-4 w-4 text-yellow-500" />
+          <span className="text-sm text-zinc-600">{rewardPoints} points</span>
         </div>
       </div>
-
-      {/* <Button 
-        variant="outline" 
-        className="mb-6 bg-[#F0EFFF] justify-start gap-2 border-[#BDBDBD] border-[0.5px] text-zinc-500 hover:bg-[#E6E5FF] hover:text-zinc-600"
-        onClick={() => handleNavigation('store')}
-      >
-        <Plus size={16} />
-        Store
-      </Button> */}
-
-      {/* Beta Feature Dialog */}
-      <Dialog>
-        {/* <DialogTrigger asChild>
-          <Button
-            size="sm"
-            className="mb-6 bg-[#F0EFFF] justify-start gap-2 border-[#BDBDBD] border-[0.5px] text-zinc-500 hover:bg-[#E6E5FF] hover:text-zinc-600"
-          >
-            <Plus size={16} />
-            Store
-          </Button>
-        </DialogTrigger> */}
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Feature Coming Soon!</DialogTitle>
-            <DialogDescription>
-              This feature will be released soon in beta. For now, we encourage
-              you to invite as many family members as possible to start building
-              your family tree. The more members you have, the richer your
-              family legacy will be!
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <DialogTrigger asChild>
-              <Button variant="outline">Close</Button>
-            </DialogTrigger>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <nav className="space-y-2 flex-1">
-        {navItems.map((item) => (
-          <Button
-            key={item.id}
-            variant="ghost"
-            className={`w-full text-[12px] justify-start gap-2 text-[#3B35C3] ${
-              activePage === item.id ? "bg-[#F0EFFF]" : ""
-            } hover:bg-[#F0EFFF] hover:text-[#3B35C3]`}
-            onClick={() => handleNavigation(item.id)}
-          >
-            <item.icon size={16} className="text-[#3B35C3]" />
-            {item.label}
-          </Button>
-        ))}
-      </nav>
-
-
-
-      <Card className="mt-auto relative border border-zinc-100 overflow-hidden h-[314px] bg-[#F0EFFF]/[0.53]">
-        <div className="absolute bottom-0 right-0 -z-0">
-          {/* <img
-            src="/dashboard/familyKick.png"
-            alt="Family illustration"
-            className="h-[314px] w-auto object-cover translate-y-[42px] right-0"
-          /> */}
-        </div>
-        <div className="relative z-10 h-full">
-          <CardHeader>
-            <CardTitle className="text-sm text-zinc-500">
-              The Street Network
-            </CardTitle>
-            <CardDescription className="text-xs text-zinc-400">
-              The Street Network is a community of family members who are connected through the Street Network.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <ScrollArea className="flex-1">
+        <div className="space-y-2 p-4">
+          {navItems.map((item) => (
             <Button
-              size="sm"
-              className="w-full bg-[#F0EFFF] text-[#3B35C3] hover:bg-[#E6E5FF] hover:text-[#3B35C3] border border-[#DDDDDD] border-[0.5px]"
-              onClick={() => handleNavigation("upgrade")}
+              key={item.id}
+              variant="ghost"
+              className={`w-full justify-start ${
+                activePage === item.id
+                  ? "bg-[#F0EFFF] text-[#3B35C3]"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+              onClick={() => handleNavigation(item.id)}
             >
-              <Crown size={16} className="mr-2" />
-              Join The Discord
+              <item.icon className="mr-2 h-4 w-4" />
+              {item.label}
             </Button>
-          </CardContent>
+          ))}
         </div>
-
-        
-      </Card>
+      </ScrollArea>
     </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block w-64 border-r border-[#DDDDDD]">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile Sidebar */}
+      <div className="md:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <Menu className="h-6 w-6 text-zinc-800" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
   );
 }

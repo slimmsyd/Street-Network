@@ -678,7 +678,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden">
-      {/* Left Sidebar */}
       <DashboardSidebar
         activePage="settings"
         onNavigate={handleNavigation}
@@ -686,11 +685,10 @@ export default function Dashboard() {
         userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
-      {/* Main Content and Right Sidebar */}
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={80} minSize={30}>
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanel defaultSize={80} minSize={30} className="flex-1">
           <div className="flex-1 flex flex-col bg-white h-screen pb-10">
-            <div className="p-6 border-b border-[#DDDDDD] bg-white flex justify-between items-center">
+            <div className="p-6 border-b border-[#DDDDDD] bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-2xl font-semibold text-zinc-800">
                   Account Settings
@@ -698,9 +696,9 @@ export default function Dashboard() {
                 <p className="text-sm text-zinc-500">
                   Manage your personal information and preferences
                 </p>
-                </div>
+              </div>
               {!isEditMode ? (
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <Button
                     variant="outline"
                     onClick={isConnected ? handleDisconnectWallet : handleConnectWallet}
@@ -715,12 +713,12 @@ export default function Dashboard() {
                   >
                     Log Out
                   </Button>
-                <Button
-                  onClick={() => setIsEditMode(true)}
+                  <Button
+                    onClick={() => setIsEditMode(true)}
                     className="bg-[#3B35C3] text-white hover:bg-[#3B35C3]/90 transition-colors duration-200"
-                >
-                  Edit Profile
-                </Button>
+                  >
+                    Edit Profile
+                  </Button>
                 </div>
               ) : (
                 <div className="flex gap-4">
@@ -746,14 +744,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div
-              className="flex-1 p-6 bg-[#F0EFFF]/[0.1] text-black overflow-y-auto"
-              style={{
-                msOverflowStyle: "none", // IE and Edge
-                scrollbarWidth: "none", // Firefox
-                WebkitOverflowScrolling: "touch",
-                    }}
-            >
+            <div className="flex-1 p-6 bg-[#F0EFFF]/[0.1] text-black overflow-y-auto">
               <style jsx>{`
                 div::-webkit-scrollbar {
                   display: none;
@@ -2054,12 +2045,9 @@ export default function Dashboard() {
           </div>
         </ResizablePanel>
         
-        <ResizableHandle
-          withHandle
-          className="bg-zinc-100 border-l border-r border-zinc-200"
-        />
+        <ResizableHandle withHandle className="hidden md:flex bg-zinc-100 border-l border-r border-zinc-200" />
         
-        <ResizablePanel defaultSize={20} minSize={25} maxSize={30}>
+        <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
           <RightDashboard
             userName={userDetails?.user?.name?.split(" ")[0] || "User"}
             userAvatar={userDetails?.user?.profileImage || ""}

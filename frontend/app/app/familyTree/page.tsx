@@ -110,45 +110,17 @@ export default function FamilyTreePage() {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden">
-  
-  <DashboardSidebar
+      <DashboardSidebar
         activePage="familyTree"
         onNavigate={handleNavigation}
         userName={userDetails?.user?.name?.split(" ")[0] || "User"}
         userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={80} minSize={30}>
-          {/* <div className="flex gap-4 mb-4">
-            <div className="relative flex-1 mx-4 my-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-300" />
-              <Input
-                placeholder="Search your legacy"
-                className="pl-8 bg-white border-zinc-100 focus:ring-zinc-200 focus:border-zinc-200 text-zinc-500 placeholder:text-zinc-300"
-              />
-            </div>
-          </div>
-               */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanel defaultSize={80} minSize={30} className="flex-1">
           <div className="container mx-auto p-4">
-            {/* <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-[#3B35C3]">Family Tree</h1>
-            </div> */}
-
-            {/* Network Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {/* <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-sm border border-indigo-100/20 hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-zinc-600 text-sm font-medium">Total Network Value</h3>
-                  <span className="bg-indigo-100 text-indigo-600 text-xs px-2 py-1 rounded-full">Live</span>
-                </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl font-bold text-indigo-600">$2.4M</span>
-                  <span className="text-green-500 text-sm">+12.5%</span>
-                </div>
-                <p className="text-zinc-500 text-xs mt-2">Combined wallet holdings across street</p>
-              </div> */}
-
               <div className="bg-gradient-to-br from-violet-50 to-white p-6 rounded-2xl shadow-sm border border-violet-100/20 hover:shadow-md transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-zinc-600 text-sm font-medium">Street Members</h3>
@@ -160,18 +132,6 @@ export default function FamilyTreePage() {
                 </div>
                 <p className="text-zinc-500 text-xs mt-2">Active members in the network</p>
               </div>
-
-              {/* <div className="bg-gradient-to-br from-fuchsia-50 to-white p-6 rounded-2xl shadow-sm border border-fuchsia-100/20 hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-zinc-600 text-sm font-medium">Total Transactions</h3>
-                  <span className="bg-fuchsia-100 text-fuchsia-600 text-xs px-2 py-1 rounded-full">24h</span>
-                </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl font-bold text-fuchsia-600">1,234</span>
-                  <span className="text-green-500 text-sm">+5.2%</span>
-                </div>
-                <p className="text-zinc-500 text-xs mt-2">Cross-family blockchain interactions</p>
-              </div> */}
             </div>
 
             <div className="border rounded-lg p-4 bg-white shadow-lg" style={{ height: 'calc(100vh - 280px)' }}>
@@ -185,9 +145,9 @@ export default function FamilyTreePage() {
           </div>
         </ResizablePanel>
         
-        <ResizableHandle withHandle className="bg-zinc-100 border-l border-r border-zinc-200" />
+        <ResizableHandle withHandle className="hidden md:flex bg-zinc-100 border-l border-r border-zinc-200" />
         
-        <ResizablePanel defaultSize={20} minSize={25} maxSize={30}>
+        <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
           <RightDashboard
             userName={userDetails?.user?.name?.split(' ')[0] || "User"}
             userAvatar={userDetails?.user?.profileImage || ""}

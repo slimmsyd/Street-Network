@@ -231,8 +231,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-white">
-      {/* Left Sidebar */}
-
       <DashboardSidebar
         activePage="dashboard"
         onNavigate={handleNavigation}
@@ -240,11 +238,10 @@ export default function Dashboard() {
         userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
-      {/* Main Content and Right Sidebar */}
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={80} minSize={30}>
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanel defaultSize={80} minSize={30} className="flex-1">
           <div className="flex-1 flex flex-col bg-white">
-            <div className="p-4  border-zinc-200">
+            <div className="p-4 border-zinc-200">
               {/* <div className="flex gap-4 mb-4">
                 <div className="relative flex-1">
                   <Search className="  absolute left-2 top-2.5 h-4 w-4 text-zinc-300" />
@@ -560,14 +557,11 @@ export default function Dashboard() {
             </div>
           </div>
         </ResizablePanel>
-
-        <ResizableHandle
-          withHandle
-          className="bg-zinc-100 border-l border-r border-zinc-200"
-        />
-
-<ResizablePanel defaultSize={20} minSize={25} maxSize={30}>
-<RightDashboard
+        
+        <ResizableHandle withHandle className="hidden md:flex bg-zinc-100 border-l border-r border-zinc-200" />
+        
+        <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
+          <RightDashboard
             userName={userDetails?.user?.name?.split(" ")[0] || "User"}
             userAvatar={userDetails?.user?.profileImage || ""}
             userRole={userDetails?.user?.familyRole || "Member"}
