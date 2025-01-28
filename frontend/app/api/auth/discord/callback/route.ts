@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/lib/authOptions";
