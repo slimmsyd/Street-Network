@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/app/api/models/User';
-import { NextRequest } from 'next/server';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/lib/authOptions";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     
-    // TODO: Replace this with actual session-based authentication
-    // For now, using hardcoded email for development
-    const email = req.nextUrl.searchParams.get('email');
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
     
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: session.user.email });
 
     if (!user) {
       return NextResponse.json(

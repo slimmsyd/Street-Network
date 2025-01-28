@@ -2,22 +2,27 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/app/api/models/User';
 import Workspace from '@/app/api/models/Workspace';
-import { NextRequest } from 'next/server';
-export async function GET(req: NextRequest) {
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/lib/authOptions";
+
+export async function GET() {
   try {
     await dbConnect();
     
-    // For now, using hardcoded email. Later this should use session/auth
-    const email = req.nextUrl.searchParams.get('email');
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
 
-    console.log("loggin the email", email);
-    const user = await User.findOne({ email: email })
+    const user = await User.findOne({ email: session.user.email })
       .populate({
         path: 'workspaces.workspaceId',
         model: Workspace,
         select: 'name'
       });
-      console.log("loggin the user", user);
 
     if (!user) {
       return NextResponse.json(

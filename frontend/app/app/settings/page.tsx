@@ -142,6 +142,7 @@ export default function Dashboard() {
   const { address, isConnected } = useAccount();
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
+  const [mounted, setMounted] = useState(false);
 
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -636,6 +637,14 @@ export default function Dashboard() {
       console.error('Failed to disconnect wallet:', error);
     }
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; // or loading spinner
+  }
 
   return (
     <div className="flex h-screen bg-white overflow-hidden">

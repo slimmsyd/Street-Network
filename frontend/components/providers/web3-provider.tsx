@@ -4,13 +4,14 @@ import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
 import { WagmiConfig } from 'wagmi';
 import { mainnet } from 'viem/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 if (!process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID) {
   throw new Error('You need to provide NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID env variable');
 }
 
 // 1. Get projectId
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
+const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID!;
 
 // 2. Create wagmiConfig
 const metadata = {
@@ -26,24 +27,34 @@ const wagmiConfig = defaultWagmiConfig({
   metadata
 });
 
-// 3. Create modal
-if (typeof window !== 'undefined') {
-  createWeb3Modal({
-    wagmiConfig,
-    projectId,
-    defaultChain: mainnet,
-    themeMode: 'dark'
-  });
-}
-
 // 4. Create a client
 const queryClient = new QueryClient();
+
+function ClientWeb3Provider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    createWeb3Modal({
+      wagmiConfig,
+      projectId,
+      defaultChain: mainnet,
+      themeMode: 'dark'
+    });
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return children;
+}
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiConfig config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <ClientWeb3Provider>
+          {children}
+        </ClientWeb3Provider>
       </QueryClientProvider>
     </WagmiConfig>
   );
