@@ -237,7 +237,7 @@ export default function Dashboard() {
         activePage="dashboard"
         onNavigate={handleNavigation}
         userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-        userAvatar={userDetails?.user?.profileImage || "/dashboard/avatar.jpeg"}
+        userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
       {/* Main Content and Right Sidebar */}

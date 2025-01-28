@@ -380,7 +380,7 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
     });
 
     node.append('image')
-      .attr('xlink:href', (d: any) => d.profileImage || '/dashboard/avatar.jpeg')
+      .attr('xlink:href', (d: any) => d.profileImage || '')
       .attr('x', (d: any) => d.id === currentUserId ? -45 : -35)
       .attr('y', (d: any) => d.id === currentUserId ? -45 : -35)
       .attr('width', (d: any) => d.id === currentUserId ? 90 : 70)

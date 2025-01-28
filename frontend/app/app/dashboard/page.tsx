@@ -237,7 +237,7 @@ export default function Dashboard() {
         activePage="dashboard"
         onNavigate={handleNavigation}
         userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-        userAvatar={userDetails?.user?.profileImage || "/dashboard/avatar.jpeg"}
+        userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
       {/* Main Content and Right Sidebar */}
@@ -320,8 +320,8 @@ export default function Dashboard() {
               </h2>
               <div className="mb-4">
                 <img
-                  src="/dashboard/Chest.png"
-                  alt="Empty chest illustration"
+                  src="/dashboard/Network.png"
+                  alt="Women In Bitcoin"
                   className="w-64 h-auto"
                 />
               </div>

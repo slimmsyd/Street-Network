@@ -37,7 +37,7 @@ export function DashboardSidebar({
   activePage = "",
   onNavigate,
   userName = "SS",
-  userAvatar = "/dashboard/avatar.jpeg",
+  userAvatar = "",
   rewardPoints = 0,
 }: DashboardSidebarProps) {
   const { data: session } = useSession();
@@ -58,7 +58,7 @@ export function DashboardSidebar({
     <div className="w-64 border-r border-zinc-200 p-4 flex flex-col">
       <div className="flex items-center gap-3 mb-6">
         <Avatar className="h-12 w-12">
-          <AvatarImage src={userAvatar} />
+        <AvatarImage src={userAvatar || "https://api.dicebear.com/7.x/emoji/svg"} />
           <AvatarFallback className="bg-zinc-100 text-zinc-800">
             {userName}
           </AvatarFallback>

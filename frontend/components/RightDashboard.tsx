@@ -82,8 +82,8 @@ export function RightDashboard({ userName, userAvatar, userRole }: RightDashboar
     <div className="h-full border-l border-zinc-200 p-4 flex flex-col">
       <div className="flex items-center gap-3 mb-6">
         <Avatar>
-          <AvatarImage src={userAvatar || "/dashboard/avatar.jpeg"} />
-          <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+        <AvatarImage src={userAvatar || "https://api.dicebear.com/7.x/emoji/svg"} />
+        <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
             {userName ? getInitials(userName) : 'U'}
           </AvatarFallback>
         </Avatar>
