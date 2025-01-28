@@ -92,9 +92,8 @@ import { UserDetails, Milestone } from "@/types/user";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { useDisconnect } from 'wagmi';
 
 interface TransactionDetails {
   id: string;
@@ -140,7 +139,7 @@ const generateUniqueId = () => {
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
 
@@ -349,10 +348,10 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (session?.user?.email || address) {
-    fetchUserDetails();
+    if (session?.user?.email || isConnected) {
+      fetchUserDetails();
     }
-  }, [session, address]); // Re-fetch when session or wallet address changes
+  }, [session, isConnected]); // Changed from address to isConnected
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev: Record<string, string>) => ({
@@ -622,6 +621,22 @@ export default function Dashboard() {
     setHasChanges(true);
   };
 
+  const handleConnectWallet = async () => {
+    try {
+      await open();
+    } catch (error) {
+      console.error('Failed to open Web3Modal:', error);
+    }
+  };
+
+  const handleDisconnectWallet = async () => {
+    try {
+      await disconnect();
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-white overflow-hidden">
       {/* Left Sidebar */}
@@ -649,10 +664,10 @@ export default function Dashboard() {
                 <div className="flex gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => address ? disconnect() : open()}
-                    className={address ? "text-red-500 hover:text-red-600" : "bg-[#3B35C3] text-white hover:bg-[#3B35C3]/90"}
+                    onClick={isConnected ? handleDisconnectWallet : handleConnectWallet}
+                    className={isConnected ? "text-red-500 hover:text-red-600" : "bg-[#3B35C3] text-white hover:bg-[#3B35C3]/90"}
                   >
-                    {address ? "Disconnect Wallet" : "Connect Wallet"}
+                    {isConnected ? `Disconnect Wallet (${address?.slice(0, 6)}...${address?.slice(-4)})` : "Connect Wallet"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1041,14 +1056,14 @@ export default function Dashboard() {
                         {address ? (
                           <Button
                             variant="outline"
-                            onClick={() => disconnect()}
+                            onClick={() => handleDisconnectWallet()}
                             className="text-red-500 hover:text-red-600 border-red-500 hover:border-red-600"
                           >
                             Disconnect
                           </Button>
                         ) : (
                           <Button
-                            onClick={() => open()}
+                            onClick={() => handleConnectWallet()}
                             className="bg-[#3B35C3] text-white hover:bg-[#3B35C3]/90"
                           >
                             Connect Wallet
