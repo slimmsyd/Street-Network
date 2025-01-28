@@ -80,7 +80,7 @@ export function DashboardSidebar({
 
       {/* Beta Feature Dialog */}
       <Dialog>
-        <DialogTrigger asChild>
+        {/* <DialogTrigger asChild>
           <Button
             size="sm"
             className="mb-6 bg-[#F0EFFF] justify-start gap-2 border-[#BDBDBD] border-[0.5px] text-zinc-500 hover:bg-[#E6E5FF] hover:text-zinc-600"
@@ -88,7 +88,7 @@ export function DashboardSidebar({
             <Plus size={16} />
             Store
           </Button>
-        </DialogTrigger>
+        </DialogTrigger> */}
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Feature Coming Soon!</DialogTitle>

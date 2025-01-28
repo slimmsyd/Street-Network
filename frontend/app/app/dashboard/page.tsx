@@ -245,7 +245,7 @@ export default function Dashboard() {
         <ResizablePanel defaultSize={80} minSize={30}>
           <div className="flex-1 flex flex-col bg-white">
             <div className="p-4  border-zinc-200">
-              <div className="flex gap-4 mb-4">
+              {/* <div className="flex gap-4 mb-4">
                 <div className="relative flex-1">
                   <Search className="  absolute left-2 top-2.5 h-4 w-4 text-zinc-300" />
                   <Input
@@ -253,7 +253,7 @@ export default function Dashboard() {
                     className="pl-8 bg-white border-zinc-100 focus:ring-zinc-200 focus:border-zinc-200 text-zinc-500 placeholder:text-zinc-300"
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex gap-4">
                 <DropdownMenu>
@@ -316,7 +316,7 @@ export default function Dashboard() {
 
             <div className="flex-1 p-4 flex flex-col items-center justify-center text-center">
               <h2 className="text-xl font-semibold mb-2 text-zinc-800">
-                Uh, Oh! Your Legacy is empty
+               Your Street Network Timline From Discord Will Go Here
               </h2>
               <div className="mb-4">
                 <img

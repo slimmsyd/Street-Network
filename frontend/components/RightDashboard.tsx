@@ -19,8 +19,8 @@ export function RightDashboard({ userName, userAvatar, userRole }: RightDashboar
   const [messages, setMessages] = useState<Array<{id: string; sender: string; text: string; isAI?: boolean}>>([
     {
       id: '1',
-      sender: 'Lineage AI',
-      text: 'Welcome to your Street Network! I\'m here to help you connect with your community.',
+      sender: 'Street Orcale',
+      text: "Currently down for beta",
       isAI: true
     }
   ]);
@@ -68,8 +68,8 @@ export function RightDashboard({ userName, userAvatar, userRole }: RightDashboar
     setTimeout(() => {
       const aiMessage = {
         id: (Date.now() + 1).toString(),
-        sender: 'Lineage AI',
-        text: "I'm here to help you connect with your community. (This is a placeholder response)",
+        sender: 'Street Network AI',
+        text: "Currently down for beta",
         isAI: true
       };
       setMessages(prev => [...prev, aiMessage]);
