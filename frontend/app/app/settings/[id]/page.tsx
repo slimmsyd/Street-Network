@@ -198,7 +198,7 @@ export default function UserSettingsPage() {
         activePage="settings"
         onNavigate={handleNavigation}
         userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-        userAvatar={userDetails?.user?.profileImage || "/dashboard/avatar.jpeg"}
+        userAvatar={userDetails?.user?.profileImage || ""}
         rewardPoints={10}
       />
       <ResizablePanelGroup direction="horizontal">
@@ -358,7 +358,7 @@ export default function UserSettingsPage() {
         <ResizablePanel defaultSize={20} minSize={25} maxSize={30}>
           <RightDashboard
             userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-            userAvatar={userDetails?.user?.profileImage || "/dashboard/avatar.jpeg"}
+            userAvatar={userDetails?.user?.profileImage || ""}
             userRole={userDetails?.user?.familyRole || "Member"}
             familyMemberCount={0}
             onInvite={() => {}}

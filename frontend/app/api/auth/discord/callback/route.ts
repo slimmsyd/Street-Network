@@ -6,20 +6,36 @@ import User from '@/app/api/models/User';
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const DISCORD_REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/discord/callback`;
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
+const DISCORD_REDIRECT_URI = `${BASE_URL}/api/auth/discord/callback`;
 
 export async function GET(request: Request) {
   try {
+    console.log('Discord Callback Environment:', {
+      clientId: DISCORD_CLIENT_ID,
+      baseUrl: BASE_URL,
+      redirectUri: DISCORD_REDIRECT_URI
+    });
+
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+      console.error('No session found in callback');
+      return NextResponse.redirect(`${BASE_URL}/app/settings?discord=error&reason=no_session`);
     }
 
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+
+    if (error) {
+      console.error('Discord OAuth error:', error, errorDescription);
+      return NextResponse.redirect(`${BASE_URL}/app/settings?discord=error&reason=${error}`);
+    }
 
     if (!code) {
-      return NextResponse.json({ success: false, error: 'No code provided' }, { status: 400 });
+      console.error('No code provided in callback');
+      return NextResponse.redirect(`${BASE_URL}/app/settings?discord=error&reason=no_code`);
     }
 
     // Exchange code for access token
@@ -40,7 +56,8 @@ export async function GET(request: Request) {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      return NextResponse.json({ success: false, error: 'Failed to get access token' }, { status: 400 });
+      console.error('Token exchange failed:', tokenData);
+      return NextResponse.redirect(`${BASE_URL}/app/settings?discord=error&reason=token_exchange_failed`);
     }
 
     // Get Discord user info
@@ -108,10 +125,10 @@ export async function GET(request: Request) {
     await user.save();
 
     // Redirect back to settings page with success
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/app/settings?discord=success`);
+    return NextResponse.redirect(`${BASE_URL}/app/settings?discord=success`);
 
   } catch (error) {
     console.error('Discord callback error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/app/settings?discord=error`);
+    return NextResponse.redirect(`${BASE_URL}/app/settings?discord=error&reason=server_error`);
   }
 } 
