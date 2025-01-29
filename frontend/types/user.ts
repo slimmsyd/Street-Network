@@ -43,7 +43,7 @@ export interface RightDashboardProps {
   userRole: string;
   familyMemberCount: number;
   onInvite: () => void;
-  onSendMessage: (message: string) => void;
+  onSendMessage: () => void;
 }
 
 export interface FamilyTreeProps {

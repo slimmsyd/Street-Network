@@ -11,9 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserPlus, MessageSquare, BookOpen, Brain, Coins, Zap } from "lucide-react";
 import { RightDashboardProps } from '@/types/user';
 
-export function RightDashboard({ userName, userAvatar, userRole }: RightDashboardProps) {
+export function RightDashboard({ userName, userAvatar, userRole, familyMemberCount, onInvite, onSendMessage }: RightDashboardProps) {
   const { data: session } = useSession();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [messages, setMessages] = useState<Array<{id: string; sender: string; text: string; isAI?: boolean}>>([
@@ -79,67 +81,157 @@ export function RightDashboard({ userName, userAvatar, userRole }: RightDashboar
   };
 
   return (
-    <div className="h-full border-l border-zinc-200 p-4 flex flex-col">
-      <div className="flex items-center gap-3 mb-6">
-        <Avatar>
-        <AvatarImage src={userAvatar || "https://api.dicebear.com/7.x/emoji/svg"} />
-        <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-            {userName ? getInitials(userName) : 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="font-medium !text-black">Hello, {userName?.split(' ')[0]}</div>
-          <div className="text-sm !text-black">{userRole || 'Member'}</div>
+    <div className="flex flex-col h-full border-l border-[#DDDDDD]">
+      {/* User Profile Section */}
+      <div className="p-6 border-b border-[#DDDDDD]">
+        <div className="flex items-center gap-4 mb-4">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={userAvatar} alt={userName} />
+            <AvatarFallback>{userName[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-medium text-zinc-800">{userName}</h3>
+            <p className="text-sm text-zinc-500">{userRole}</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-zinc-600 hover:text-[#3B35C3] hover:bg-[#F0EFFF]"
+            onClick={onInvite}
+          >
+            <UserPlus className="h-4 w-4" />
+            Invite Members
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-zinc-600 hover:text-[#3B35C3] hover:bg-[#F0EFFF]"
+            onClick={onSendMessage}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Send Message
+          </Button>
         </div>
       </div>
 
-      {/* Chat Box */}
-      <Card className="flex-1 min-h-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-400/10 backdrop-blur-sm flex flex-col">
-        <CardHeader className="py-2 px-3 flex-shrink-0">
-          <CardTitle className="text-xs font-medium text-zinc-300 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Street Network Assistant
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 min-h-0 rounded-md bg-black/20 border border-purple-400/10 backdrop-blur-sm p-2 overflow-y-auto">
-            <div className="space-y-2">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex items-start gap-2 ${message.isAI ? 'opacity-80' : ''}`}>
-                  <Avatar className="h-6 w-6 border border-purple-400/20">
-                    <AvatarFallback className="text-[10px] bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-                      {message.isAI ? 'AI' : getInitials(message.sender)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-zinc-400 mb-0.5">{message.sender}</p>
-                    <div className="inline-block rounded-lg bg-white/5 px-2 py-1 text-xs text-zinc-300">
-                      {message.text}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex gap-2 flex-shrink-0 mt-3">
-            <Input 
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-1 h-8 bg-black/20 border-purple-400/20 text-zinc-300 text-sm placeholder:text-zinc-600"
-              placeholder="Ask me anything about your community..."
-            />
-            <Button 
-              size="sm" 
-              onClick={handleSendMessage}
-              className="h-8 px-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:opacity-90 shadow-none focus:shadow-none active:shadow-none"
-            >
-              Send
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Resource List Section */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-zinc-800 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-[#3B35C3]" />
+            Resource List
+          </h3>
+        </div>
+        
+        <Tabs defaultValue="defi" className="w-full">
+          <TabsList className="w-full mb-4 bg-zinc-100/50">
+            <TabsTrigger value="defi" className="flex-1 data-[state=active]:bg-white">
+              <div className="flex items-center gap-1">
+                <Coins className="h-3 w-3" />
+                <span>DeFi</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex-1 data-[state=active]:bg-white">
+              <div className="flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                <span>AI</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="mem" className="flex-1 data-[state=active]:bg-white">
+              <div className="flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                <span>MEM</span>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="defi" className="mt-0">
+            <Card className="p-4 space-y-4">
+              <div className="space-y-3">
+                <ResourceItem
+                  title="Uniswap Guide"
+                  description="Complete guide to using Uniswap DEX"
+                  link="#"
+                />
+                <ResourceItem
+                  title="DeFi Security"
+                  description="Best practices for DeFi security"
+                  link="#"
+                />
+                <ResourceItem
+                  title="Yield Farming"
+                  description="Introduction to yield farming strategies"
+                  link="#"
+                />
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ai" className="mt-0">
+            <Card className="p-4 space-y-4">
+              <div className="space-y-3">
+                <ResourceItem
+                  title="AI Agents Guide"
+                  description="Understanding autonomous AI agents"
+                  link="#"
+                />
+                <ResourceItem
+                  title="LLM Development"
+                  description="Building with language models"
+                  link="#"
+                />
+                <ResourceItem
+                  title="AI Safety"
+                  description="Best practices for AI development"
+                  link="#"
+                />
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mem" className="mt-0">
+            <Card className="p-4 space-y-4">
+              <div className="space-y-3">
+                <ResourceItem
+                  title="Meme Creation"
+                  description="Guide to creating viral memes"
+                  link="#"
+                />
+                <ResourceItem
+                  title="Community Building"
+                  description="Building engaged communities"
+                  link="#"
+                />
+                <ResourceItem
+                  title="Content Strategy"
+                  description="Effective content distribution"
+                  link="#"
+                />
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
+  );
+}
+
+interface ResourceItemProps {
+  title: string;
+  description: string;
+  link: string;
+}
+
+function ResourceItem({ title, description, link }: ResourceItemProps) {
+  return (
+    <a 
+      href={link}
+      className="block p-3 rounded-lg hover:bg-[#F0EFFF] transition-colors duration-200"
+    >
+      <h4 className="text-sm font-medium text-zinc-800">{title}</h4>
+      <p className="text-xs text-zinc-500 mt-1">{description}</p>
+    </a>
   );
 }

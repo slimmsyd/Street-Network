@@ -103,9 +103,9 @@ export default function FamilyTreePage() {
     console.log('Invite clicked');
   };
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = () => {
     // Handle sending message
-    console.log('Message sent:', message);
+    console.log('Message clicked');
   };
 
   return (
