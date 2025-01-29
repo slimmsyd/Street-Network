@@ -6,8 +6,8 @@ import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { RightDashboard } from '@/components/RightDashboard';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Search, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -20,10 +20,17 @@ export default function FamilyTreePage() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchTotalUsers = async () => {
+  const fetchTotalUsers = useCallback(async () => {
     try {
-      const response = await fetch('/api/users/all');
+      const response = await fetch('/api/users/all', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setTotalUsers(data.users.length);
@@ -31,11 +38,14 @@ export default function FamilyTreePage() {
     } catch (error) {
       console.error('Error fetching total users:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchTotalUsers();
   }, []);
+
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    await fetchTotalUsers();
+    await fetchUserDetails();
+    setIsRefreshing(false);
+  };
 
   const fetchUserDetails = async () => {
     setIsLoading(true);
@@ -59,7 +69,13 @@ export default function FamilyTreePage() {
         throw new Error("No authentication method available");
       }
 
-      const response = await fetch(endpoint);
+      const response = await fetch(endpoint, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -87,8 +103,16 @@ export default function FamilyTreePage() {
   };
 
   useEffect(() => {
-    fetchUserDetails();
-  }, []);
+    fetchTotalUsers();
+    if (session?.user?.email) {
+      fetchUserDetails();
+    }
+
+    // Set up polling for updates
+    const intervalId = setInterval(fetchTotalUsers, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [session, fetchTotalUsers]);
 
   const handleNodeClick = (nodeId: string) => {
     router.push(`/app/familyTree/${nodeId}`);
@@ -124,7 +148,15 @@ export default function FamilyTreePage() {
               <div className="bg-gradient-to-br from-violet-50 to-white p-6 rounded-2xl shadow-sm border border-violet-100/20 hover:shadow-md transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-zinc-600 text-sm font-medium">Street Members</h3>
-                  <span className="bg-violet-100 text-violet-600 text-xs px-2 py-1 rounded-full">Growing</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshData}
+                    disabled={isRefreshing}
+                    className="h-8 w-8 p-0"
+                  >
+                    <RefreshCw className={`h-4 w-4 text-zinc-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </Button>
                 </div>
                 <div className="flex items-baseline space-x-2">
                   <span className="text-3xl font-bold text-violet-600">{totalUsers}</span>
@@ -152,7 +184,7 @@ export default function FamilyTreePage() {
             userName={userDetails?.user?.name?.split(' ')[0] || "User"}
             userAvatar={userDetails?.user?.profileImage || ""}
             userRole={userDetails?.user?.familyRole || "Member"}
-            familyMemberCount={0}
+            familyMemberCount={totalUsers}
             onInvite={handleInvite}
             onSendMessage={handleSendMessage}
           />

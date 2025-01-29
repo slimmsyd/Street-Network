@@ -24,17 +24,22 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists with either email or wallet
-    const existingUser = await User.findOne({
-      $or: [
-        { email: email || null },
-        { walletAddress: walletAddress || null }
-      ]
-    });
-
-    // If user exists, handle the case differently based on auth method
-    if (existingUser) {
-      // For wallet-based auth, return success with existing user
-      if (walletAddress && existingUser.walletAddress === walletAddress) {
+    let existingUser = null;
+    
+    if (email) {
+      existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'An account with this email already exists. Please log in instead.' 
+        }, { status: 400 });
+      }
+    }
+    
+    if (walletAddress) {
+      existingUser = await User.findOne({ walletAddress });
+      if (existingUser) {
+        // If user exists with this wallet, return success for wallet auth
         return NextResponse.json({ 
           success: true, 
           user: {
@@ -45,22 +50,6 @@ export async function POST(request: Request) {
             familyRole: existingUser.familyRole
           }
         });
-      }
-      
-      // For email-based auth, return error
-      if (email && existingUser.email === email) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'An account with this email already exists. Please log in instead.' 
-        }, { status: 400 });
-      }
-
-      // For wallet-based auth with different wallet
-      if (walletAddress) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'This wallet is already associated with an account. Please use a different wallet or log in.' 
-        }, { status: 400 });
       }
     }
 
@@ -74,7 +63,7 @@ export async function POST(request: Request) {
     const user = await User.create({
       email: email || null,
       walletAddress: walletAddress || null,
-      name: name || null,
+      name: name || 'Anonymous User',
       password: hashedPassword,
       familyRole: 'pending', // This will be updated in the role selection step
     });
