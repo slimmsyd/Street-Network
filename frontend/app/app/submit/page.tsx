@@ -9,10 +9,12 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function CryptoSubmitPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { userProfile, isLoading: profileLoading } = useUserProfile();
   const [formData, setFormData] = useState({
     twitterHandle: '',
     specialty: ''
@@ -35,7 +37,14 @@ export default function CryptoSubmitPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          submittedBy: userProfile?.user ? {
+            id: userProfile.user.id,
+            name: userProfile.user.name,
+            email: userProfile.user.email
+          } : undefined
+        }),
       });
 
       const data = await response.json();
@@ -61,7 +70,13 @@ export default function CryptoSubmitPage() {
 
   return (
     <div className="flex h-screen bg-white">
-      <DashboardSidebar activePage="submit" onNavigate={handleNavigation} />
+      <DashboardSidebar 
+        activePage="submit" 
+        onNavigate={handleNavigation}
+        userName={userProfile?.user?.name?.split(" ")[0] || "User"}
+        userAvatar={userProfile?.user?.profileImage || ""}
+        rewardPoints={10}
+      />
       <main className="flex-1 overflow-y-auto">
         <div className="container max-w-2xl mx-auto py-10">
           <div className="space-y-6">

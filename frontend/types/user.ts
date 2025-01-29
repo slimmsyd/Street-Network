@@ -7,27 +7,27 @@ export interface Milestone {
 }
 
 export interface UserDetails {
+  exists: boolean;
   user: {
     id: string;
-    name: string;
     email: string;
+    name: string;
+    points?: number;
     profileImage?: string;
     profileImageId?: string;
     occupation?: string;
     phoneNumber?: string;
     birthDay?: string;
-    location?: string;
-    bio?: string;
-    familyRole?: string;
     maritalStatus?: string;
+    location?: string;
     gender?: string;
+    bio?: string;
     interests?: string[];
     milestones?: Milestone[];
+    familyRole?: string;
     contributions?: string[];
   };
-  exists: boolean;
-} 
-
+}
 
 export interface DashboardSidebarProps {
   activePage?: string;

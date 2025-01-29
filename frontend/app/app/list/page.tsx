@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface CryptoUser {
   _id: string;
@@ -20,6 +21,7 @@ interface CryptoUser {
 
 export default function CryptoListPage() {
   const router = useRouter();
+  const { userProfile, isLoading: profileLoading } = useUserProfile();
   const [users, setUsers] = useState<CryptoUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,13 @@ export default function CryptoListPage() {
 
   return (
     <div className="flex h-screen bg-white">
-      <DashboardSidebar activePage="list" onNavigate={handleNavigation} />
+      <DashboardSidebar 
+        activePage="list" 
+        onNavigate={handleNavigation}
+        userName={userProfile?.user?.name?.split(" ")[0] || "User"}
+        userAvatar={userProfile?.user?.profileImage || ""}
+        rewardPoints={10}
+      />
       <main className="flex-1 overflow-y-auto">
         <div className="container max-w-4xl mx-auto py-10">
           <div className="space-y-6">

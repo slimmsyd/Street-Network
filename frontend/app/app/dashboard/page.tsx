@@ -59,15 +59,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useArweaveUpload } from "@/hooks/useArweaveUpload";
 import { useRouter, usePathname } from "next/navigation";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { UserDetails } from "@/types/user";
-import { useUserDetails } from "@/hooks/useUserDetails";
 import { useUserImages } from "@/hooks/useUserImages";
 import { RightDashboard } from "@/components/RightDashboard";
 import { useSession } from "next-auth/react";
+import { useUserProfile } from "@/hooks/useUserProfile";
+
 interface TransactionDetails {
   id: string;
   status: string;
@@ -78,22 +78,20 @@ interface TransactionDetails {
 
 export default function Dashboard() {
   const { data: session } = useSession();
+  const { userProfile, isLoading: profileLoading } = useUserProfile();
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadStatus, setUploadStatus] = useState<{ [key: string]: string }>(
     {}
   );
-  const [isLoading, setIsLoading] = useState(false);
   const [transactions, setTransactions] = useState<{
     [key: string]: TransactionDetails;
   }>({});
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
-    userId: "user123",
+    userId: userProfile?.user?.id || "unknown",
     familyId: "family456",
   });
-
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
   const {
     images,
@@ -102,61 +100,15 @@ export default function Dashboard() {
     refreshImages,
     deleteImage,
     canUploadMore,
-  } = useUserImages(userDetails?.user?.id || "");
+  } = useUserImages(userProfile?.user?.id || "");
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentMember = pathname.split("/").pop() || "me";
 
-  const fetchUserDetails = async () => {
-    setIsLoading(true);
-    try {
-      const email = session?.user?.email;
-      if (!email) {
-        console.error('No email found in session');
-        return;
-      }
-
-      // First try to get the current user
-      const response = await fetch('/api/users/current?email=' + encodeURIComponent(email));
-      const data = await response.json();
-
-      if (data.success) {
-        setUserDetails(data);
-      } else {
-        // If current user endpoint fails, fallback to email endpoint
-        const fallbackResponse = await fetch(
-          `/api/users/email/${encodeURIComponent(email)}`
-        );
-        const fallbackData = await fallbackResponse.json();
-
-        if (fallbackData.success) {
-          console.log("User details (fallback):", fallbackData);
-          setUserDetails(fallbackData);
-        } else {
-          console.error("Failed to fetch user:", fallbackData.error);
-          setUserDetails({
-            exists: false,
-            user: {
-              id: "",
-              email: email as string,
-              name: "User",
-              milestones: [],
-            },
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      setUserDetails(null);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleNavigation = (page: string) => {
+    router.push(`/app/${page}`);
   };
-
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetchUserDetails();
-    }
-  }, [session]); // Only depend on session changes
-
 
   const handleUploadToArweave = async () => {
     for (const file of selectedFiles) {
@@ -217,16 +169,8 @@ export default function Dashboard() {
     }
   };
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const currentMember = pathname.split("/").pop() || "me";
-
   const handleNodeClick = (nodeId: string) => {
     router.push(`/app/familyTree/${nodeId}`);
-  };
-
-  const handleNavigation = (page: string) => {
-    router.push(`/app/${page}`);
   };
 
   return (
@@ -234,8 +178,8 @@ export default function Dashboard() {
       <DashboardSidebar
         activePage="dashboard"
         onNavigate={handleNavigation}
-        userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-        userAvatar={userDetails?.user?.profileImage || ""}
+        userName={userProfile?.user?.name?.split(" ")[0] || "User"}
+        userAvatar={userProfile?.user?.profileImage || ""}
         rewardPoints={10}
       />
       <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -562,9 +506,9 @@ export default function Dashboard() {
         
         <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
           <RightDashboard
-            userName={userDetails?.user?.name?.split(" ")[0] || "User"}
-            userAvatar={userDetails?.user?.profileImage || ""}
-            userRole={userDetails?.user?.familyRole || "Member"}
+            userName={userProfile?.user?.name?.split(" ")[0] || "User"}
+            userAvatar={userProfile?.user?.profileImage || ""}
+            userRole={userProfile?.user?.familyRole || "Member"}
             familyMemberCount={0}
             onInvite={() => {}}
             onSendMessage={() => {}}
