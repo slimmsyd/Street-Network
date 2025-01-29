@@ -24,16 +24,27 @@ export default function FamilyTreePage() {
 
   const fetchTotalUsers = useCallback(async () => {
     try {
-      const response = await fetch('/api/users/all', {
+      // Add timestamp to URL to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/users/all?t=${timestamp}`, {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success) {
+        console.log('Total users fetched:', data.users.length);
         setTotalUsers(data.users.length);
+      } else {
+        console.error('Failed to fetch users:', data.error);
       }
     } catch (error) {
       console.error('Error fetching total users:', error);
@@ -108,8 +119,8 @@ export default function FamilyTreePage() {
       fetchUserDetails();
     }
 
-    // Set up polling for updates
-    const intervalId = setInterval(fetchTotalUsers, 30000); // Poll every 30 seconds
+    // Poll more frequently (every 10 seconds) to keep counts in sync
+    const intervalId = setInterval(fetchTotalUsers, 10000);
 
     return () => clearInterval(intervalId);
   }, [session, fetchTotalUsers]);

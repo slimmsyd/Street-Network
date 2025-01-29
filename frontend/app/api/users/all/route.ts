@@ -8,8 +8,13 @@ export async function GET() {
     await connectToDatabase();
     console.log('Database connected successfully');
     
+    // Force a fresh query by using a timestamp
+    const timestamp = new Date().getTime();
+    console.log('Query timestamp:', timestamp);
+    
     // Fetch all users with their family connections populated
     const users = await User.find({})
+      .lean() // Use lean for better performance
       .populate({
         path: 'familyConnections.relatedUserId',
         model: 'User',
@@ -25,7 +30,14 @@ export async function GET() {
       return NextResponse.json({
         success: false,
         error: 'No users found'
-      }, { status: 404 });
+      }, { 
+        status: 404,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     const mappedUsers = users.map(user => ({
@@ -48,7 +60,14 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      users: mappedUsers
+      users: mappedUsers,
+      timestamp // Include timestamp in response for debugging
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (error) {
     console.error('Detailed error in /api/users/all:', {
@@ -58,6 +77,13 @@ export async function GET() {
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Server Error'
-    }, { status: 500 });
+    }, { 
+      status: 500,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   }
 } 
