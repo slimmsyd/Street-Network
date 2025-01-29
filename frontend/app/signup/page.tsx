@@ -231,6 +231,10 @@ export default function SignUpPage() {
     }
   };
 
+  const skipToApp = () => {
+    router.push('/app/dashboard');
+  };
+
   if (isRedirecting) {
     return (
       <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -258,6 +262,17 @@ export default function SignUpPage() {
               />
             </div>
             
+            {/* Skip button */}
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="ghost"
+                onClick={skipToApp}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Skip Sign Up →
+              </Button>
+            </div>
+
             {/* Tab Switching */}
             <div className="flex space-x-4 mb-8 border-b border-gray-200">
               <button

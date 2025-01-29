@@ -192,6 +192,10 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  points: {
+    type: Number,
+    default: 0
   }
 });
 

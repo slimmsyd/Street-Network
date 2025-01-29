@@ -19,6 +19,7 @@ import {
   Plus,
   GitBranch,
   Crown,
+  Users,
 } from "lucide-react";
 import { DashboardSidebarProps } from "@/types/user";
 import { useSession } from "next-auth/react";
@@ -65,6 +66,8 @@ export function DashboardSidebar({
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "familyTree", label: "Street Tree", icon: GitBranch },
+    { id: "submit", label: "Crypto Submit", icon: Plus },
+    { id: "list", label: "Crypto List", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

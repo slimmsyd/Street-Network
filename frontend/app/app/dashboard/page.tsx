@@ -253,7 +253,7 @@ export default function Dashboard() {
               </div> */}
 
               <div className="flex gap-4">
-                <DropdownMenu>
+                {/* <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
@@ -270,9 +270,9 @@ export default function Dashboard() {
                     <DropdownMenuItem>Photos</DropdownMenuItem>
                     <DropdownMenuItem>Videos</DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
 
-                <DropdownMenu>
+                {/* <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
@@ -288,9 +288,9 @@ export default function Dashboard() {
                     <DropdownMenuItem>Family</DropdownMenuItem>
                     <DropdownMenuItem>Friends</DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
 
-                <DropdownMenu>
+                {/* <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
@@ -307,7 +307,7 @@ export default function Dashboard() {
                     <DropdownMenuItem>Last 30 days</DropdownMenuItem>
                     <DropdownMenuItem>Last year</DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
               </div>
             </div>
 
