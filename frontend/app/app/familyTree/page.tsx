@@ -10,9 +10,10 @@ import { Search, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-
+import { useAccount } from 'wagmi';
 export default function FamilyTreePage() {
   const { data: session } = useSession();
+  const { address, isConnected } = useAccount();
   
   const router = useRouter();
   const pathname = usePathname();
@@ -57,16 +58,21 @@ export default function FamilyTreePage() {
     await fetchUserDetails();
     setIsRefreshing(false);
   };
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const fetchUserDetails = async () => {
+    console.log("Fetching user details");
     setIsLoading(true);
     try {
       const email = session?.user?.email;
-      const walletAddress = session?.user?.walletAddress;
-
+      const walletAddress = address; // Using address from useAccount
+      
+      console.log("User auth details:", { email, walletAddress });
+      
       if (!email && !walletAddress) {
-        console.log("No authentication credentials found");
-        setIsLoading(false);
+        console.log("No email or wallet address found");
         return;
       }
 
@@ -80,20 +86,32 @@ export default function FamilyTreePage() {
         throw new Error("No authentication method available");
       }
 
-      const response = await fetch(endpoint, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await fetch(endpoint);
       const data = await response.json();
 
+      console.log("User details response:", data);
+
       if (data.success) {
-        console.log("User details:", data);
         setUserDetails(data);
+        // If we found a user by wallet but they don't have a wallet address saved, update it
+        if (walletAddress && !data.user.walletAddress) {
+          const updateResponse = await fetch(endpoint, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              walletAddress,
+            }),
+        });
+          const updateData = await updateResponse.json();
+          if (updateData.success) {
+            setUserDetails(updateData);
+          }
+        }
       } else {
         console.error("Failed to fetch user:", data.error);
+        // Create a minimal user object for new users
         setUserDetails({
           exists: false,
           user: {
@@ -112,6 +130,7 @@ export default function FamilyTreePage() {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchTotalUsers();
