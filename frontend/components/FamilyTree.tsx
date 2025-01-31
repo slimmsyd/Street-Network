@@ -128,20 +128,27 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
           setCurrentUserId(currentUser.id);
         }
 
-        // Create links between related nodes only
+        // Create links between all users (simple network)
         const treeLinks: TreeLink[] = [];
-        treeNodes.forEach(node => {
-          node.relationships.forEach(rel => {
-            const targetNode = treeNodes.find(n => n.id === rel.relatedUserId);
-            if (targetNode) {
-              treeLinks.push({
-                source: node,
-                target: targetNode,
-                type: rel.relationship,
-                confirmed: rel.confirmed
-              });
-            }
-          });
+        const linkDistance = 200; // Base distance between nodes
+
+        // Create links between every pair of nodes
+        for (let i = 0; i < treeNodes.length; i++) {
+          for (let j = i + 1; j < treeNodes.length; j++) {
+            treeLinks.push({
+              source: treeNodes[i],
+              target: treeNodes[j],
+              type: 'connection',
+              confirmed: true
+            });
+          }
+        }
+
+        // Add this debug log to verify links
+        console.log('Created links:', {
+          linkCount: treeLinks.length,
+          sampleLink: treeLinks[0],
+          allLinks: treeLinks
         });
 
         // Update state
@@ -190,32 +197,6 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
       .attr('height', '100%')
       .attr('viewBox', [-width / 2, -height / 2, width, height])
       .style('background-color', 'rgba(255, 255, 255, 0.02)');
-
-    // Define arrow markers for different relationship types
-    const arrowColors = {
-      parent: '#4A90E2',
-      spouse: '#E24A8D',
-      sibling: '#50C878',
-      extended: '#FFA500',
-      grandparent: '#9370DB',
-      default: '#999'
-    };
-
-    // Add arrow markers for each relationship type
-    Object.entries(arrowColors).forEach(([type, color]) => {
-      svg.append('defs')
-        .append('marker')
-        .attr('id', `arrow-${type}`)
-        .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 20)
-        .attr('refY', 0)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
-        .attr('orient', 'auto')
-        .append('path')
-        .attr('fill', color)
-        .attr('d', 'M0,-5L10,0L0,5');
-    });
 
     // Create a container group for zoom/pan behavior
     const g = svg.append('g')
@@ -286,55 +267,17 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
       .force('x', d3.forceX().strength(0.02))  // Very weak x force
       .force('y', d3.forceY().strength(0.02));  // Very weak y force
 
-    // Draw links with curved paths
+    // Draw links with more visible styling
     const link = g.append('g')
       .attr('class', 'links')
-      .selectAll('path')  // Changed from 'line' to 'path'
+      .selectAll('line')
       .data(links)
-      .join('path')  // Using paths instead of lines
+      .join('line')
       .attr('class', 'link')
-      .style('fill', 'none')  // Paths need fill:none
-      .style('stroke', (d: TreeLink) => {
-        const relType = (d as any).type?.toLowerCase() || 'unknown';
-        // Parent-child relationships
-        if (['mother', 'father', 'son', 'daughter', 'parent', 'child'].includes(relType)) {
-          return '#4A90E2';
-        }
-        // Spouse relationships
-        if (['spouse', 'husband', 'wife'].includes(relType)) {
-          return '#E24A8D';
-        }
-        // Sibling relationships
-        if (['brother', 'sister', 'sibling'].includes(relType)) {
-          return '#50C878';
-        }
-        // Extended family
-        if (['uncle', 'aunt', 'nephew', 'niece', 'cousin'].includes(relType)) {
-          return '#FFA500';
-        }
-        // Grandparent/grandchild relationships
-        if (['grandfather', 'grandmother', 'grandson', 'granddaughter'].includes(relType)) {
-          return '#9370DB';
-        }
-        return '#999';
-      })
-      .style('stroke-width', 3)  // Increased from 2
-      .style('stroke-opacity', 0.8)  // Increased from 0.6
-      .style('stroke-dasharray', (d: TreeLink) => {
-        const relationship = nodes
-          .find(n => n.id === (d.source as any).id)
-          ?.relationships.find(r => r.relatedUserId === (d.target as any).id);
-        return relationship?.confirmed ? 'none' : '8,4';  // Increased dash size
-      })
-      .attr('marker-end', (d: TreeLink) => {
-        const relType = (d as any).type?.toLowerCase() || 'unknown';
-        if (['mother', 'father', 'parent'].includes(relType)) return 'url(#arrow-parent)';
-        if (['spouse', 'husband', 'wife'].includes(relType)) return 'url(#arrow-spouse)';
-        if (['brother', 'sister', 'sibling'].includes(relType)) return 'url(#arrow-sibling)';
-        if (['uncle', 'aunt', 'nephew', 'niece', 'cousin'].includes(relType)) return 'url(#arrow-extended)';
-        if (['grandfather', 'grandmother'].includes(relType)) return 'url(#arrow-grandparent)';
-        return 'url(#arrow-default)';
-      });
+      .style('stroke', '#4A90E2')  // Bright blue color
+      .style('stroke-width', 4)    // Increased thickness
+      .style('stroke-opacity', 0.8)
+      .style('stroke-linecap', 'round');  // Rounded line ends
 
     console.log('Creating nodes...');
 
@@ -398,32 +341,20 @@ export function FamilyTree({ currentPage, onNodeClick, className, userProfileIma
 
     console.log('Setting up simulation tick...');
 
-    // Update the simulation tick function to use curved paths
+    // Update the simulation tick function with position clamping
     simulation.on('tick', () => {
-      link.attr('d', (d: any) => {
-        const dx = d.target.x - d.source.x;
-        const dy = d.target.y - d.source.y;
-        const dr = Math.sqrt(dx * dx + dy * dy);
-        
-        // Calculate curve based on relationship type
-        const relType = d.type?.toLowerCase() || 'unknown';
-        let curvature = 0;
-        
-        // Adjust curvature based on relationship type
-        if (['spouse', 'husband', 'wife'].includes(relType)) {
-          curvature = 0;  // Straight line for spouses
-        } else if (['brother', 'sister', 'sibling'].includes(relType)) {
-          curvature = 1.5;  // More curved for siblings
-        } else {
-          curvature = 1;  // Default curvature
-        }
-        
-        const curve = (dr * curvature) || 1;  // Prevent division by 0
-        
-        return `M${d.source.x},${d.source.y}A${curve},${curve} 0 0,1 ${d.target.x},${d.target.y}`;
+      link
+        .attr('x1', d => (d.source as TreeNode).x || 0)
+        .attr('y1', d => (d.source as TreeNode).y || 0)
+        .attr('x2', d => (d.target as TreeNode).x || 0)
+        .attr('y2', d => (d.target as TreeNode).y || 0);
+
+      // Keep nodes within visible area
+      nodes.forEach(d => {
+        d.x = Math.max(-900, Math.min(900, d.x as number));
+        d.y = Math.max(-700, Math.min(700, d.y as number));
       });
 
-      // Update node positions
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
