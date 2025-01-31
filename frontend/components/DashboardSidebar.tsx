@@ -20,6 +20,7 @@ import {
   GitBranch,
   Crown,
   Users,
+  Book,
 } from "lucide-react";
 import { DashboardSidebarProps } from "@/types/user";
 import { useSession } from "next-auth/react";
@@ -68,6 +69,7 @@ export function DashboardSidebar({
     { id: "familyTree", label: "Street Tree", icon: GitBranch },
     { id: "submit", label: "Crypto Submit", icon: Plus },
     { id: "list", label: "Crypto List", icon: Users },
+    { id: "resources", label: "Resources", icon: Book },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
