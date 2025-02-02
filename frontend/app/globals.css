@@ -126,3 +126,17 @@ body{
     @apply bg-background text-foreground;
   }
 }
+
+
+.wallet-adapter-button-trigger {
+  background-color: #3B35C3 !important;
+  justify-content: center !important;
+}
+
+.wallet-adapter-button-trigger:hover {
+  background-color: #2D2A9C !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  z-index: 1000 !important;
+}
