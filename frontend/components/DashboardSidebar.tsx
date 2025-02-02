@@ -71,6 +71,7 @@ export function DashboardSidebar({
     { id: "list", label: "Crypto List", icon: Users },
     { id: "resources", label: "Resources", icon: Book },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "fundingPage", label: "Community Fund", icon: Book },
   ];
 
   const SidebarContent = () => (

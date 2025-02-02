@@ -73,5 +73,8 @@ const ResourceSchema = new mongoose.Schema({
   timestamps: true // Adds createdAt and updatedAt fields
 });
 
-export default mongoose.models.Resource || mongoose.model('resources', ResourceSchema); 
+// Modified export to prevent model recompilation
+const ResourceModel = mongoose.models.Resource || mongoose.model('Resource', ResourceSchema);
+
+export default ResourceModel; 
 
