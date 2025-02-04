@@ -1,4 +1,4 @@
-import { createNft, fetchDigitalAsset, verifyCollection } from "@metaplex-foundation/mpl-token-metadata";
+import { createNft, fetchDigitalAsset, verifyCollection, findMetadataPda as findMetadataPdaV3, findMasterEditionPda } from "@metaplex-foundation/mpl-token-metadata";
 import { generateSigner, percentAmount, publicKey } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -149,7 +149,7 @@ export const useMintNFT = () => {
         sellerFeeBasisPoints: percentAmount(0),
         collection: {
           key: publicKey(COLLECTION_CONFIG.address),
-          verified: true  // Set to true to properly link to collection
+          verified: true
         },
         creators: [
           {
@@ -164,11 +164,16 @@ export const useMintNFT = () => {
       }).sendAndConfirm(umi);
 
       // Verify the collection membership
-      const metadata = findMetadataPda(umi, { mint: mint.publicKey });
-      await verifyCollectionV1(umi, {
+      const metadata = findMetadataPdaV3(umi, { mint: mint.publicKey });
+      const collectionMetadata = findMetadataPdaV3(umi, { mint: publicKey(COLLECTION_CONFIG.address) });
+      const collectionMasterEdition = findMasterEditionPda(umi, { mint: publicKey(COLLECTION_CONFIG.address) });
+      
+      await verifyCollection(umi, {
         metadata,
         collectionMint: publicKey(COLLECTION_CONFIG.address),
-        authority: umi.identity,
+        collectionAuthority: umi.identity,
+        collection: collectionMetadata,
+        collectionMasterEditionAccount: collectionMasterEdition
       }).sendAndConfirm(umi);
 
       console.log('Transaction confirmed:', {
