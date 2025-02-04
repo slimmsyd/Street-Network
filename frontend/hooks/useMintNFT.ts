@@ -29,9 +29,11 @@ const fetchCurrentSupply = async () => {
 export const useMintNFT = () => {
   // Function to estimate costs
   const estimateTransactionCosts = async (umi: any) => {
-    const networkFee = 0.00016; // Standard network fee
-    const rentExemption = 0.0149; // Rent exemption for account creation
-    const totalCost = networkFee + rentExemption;
+    // Account for all required costs
+    const networkFee = 0.00016; // Network fee
+    const rentExemption = 0.00203928; // Token account rent
+    const metadataRent = 0.01291632; // Metadata account rent
+    const totalCost = networkFee + rentExemption + metadataRent;
 
     // Get current SOL price
     try {
@@ -39,19 +41,32 @@ export const useMintNFT = () => {
       const data = await response.json();
       const solPrice = data.solana.usd;
 
+      const networkFeeUSD = (networkFee * solPrice).toFixed(3);
+      const rentExemptionUSD = (rentExemption * solPrice).toFixed(3);
+      const metadataRentUSD = (metadataRent * solPrice).toFixed(3);
+      const totalCostUSD = (totalCost * solPrice).toFixed(3);
+
       return {
         networkFee,
         rentExemption,
+        metadataRent,
         totalCostSOL: totalCost,
-        totalCostUSD: (totalCost * solPrice).toFixed(2),
-        solPrice
+        networkFeeUSD,
+        rentExemptionUSD,
+        metadataRentUSD,
+        totalCostUSD,
+        solPrice: solPrice.toFixed(2)
       };
     } catch (error) {
       console.error('Error fetching SOL price:', error);
       return {
         networkFee,
         rentExemption,
+        metadataRent,
         totalCostSOL: totalCost,
+        networkFeeUSD: null,
+        rentExemptionUSD: null,
+        metadataRentUSD: null,
         totalCostUSD: null,
         solPrice: null
       };
@@ -77,17 +92,25 @@ export const useMintNFT = () => {
       const costs = await estimateTransactionCosts(umi);
       
       console.log('Estimated Transaction Costs:', {
-        networkFee: `${costs.networkFee} SOL`,
-        rentExemption: `${costs.rentExemption} SOL`,
-        totalCost: `${costs.totalCostSOL} SOL`,
-        totalCostUSD: costs.totalCostUSD ? `$${costs.totalCostUSD}` : 'Unknown',
-        currentSOLPrice: costs.solPrice ? `$${costs.solPrice}` : 'Unknown',
+        networkFee: `${costs.networkFee} SOL ($${costs.networkFeeUSD})`,
+        tokenRent: `${costs.rentExemption} SOL ($${costs.rentExemptionUSD})`,
+        metadataRent: `${costs.metadataRent} SOL ($${costs.metadataRentUSD})`,
+        totalCost: `${costs.totalCostSOL} SOL ($${costs.totalCostUSD})`,
+        currentSOLPrice: `$${costs.solPrice}`,
         yourBalance: `${balanceInSol.toFixed(4)} SOL`
       });
 
       // Check if user has enough balance
       if (balanceInSol < costs.totalCostSOL) {
-        throw new Error(`Insufficient balance. You need ${costs.totalCostSOL} SOL (${costs.totalCostUSD ? `$${costs.totalCostUSD}` : 'Unknown USD'}) for this transaction. Your balance: ${balanceInSol.toFixed(4)} SOL`);
+        throw new Error(
+          `Insufficient balance for minting:\n\n` +
+          `Network Fee: ${costs.networkFee} SOL ($${costs.networkFeeUSD})\n` +
+          `Token Storage: ${costs.rentExemption} SOL ($${costs.rentExemptionUSD})\n` +
+          `Metadata Storage: ${costs.metadataRent} SOL ($${costs.metadataRentUSD})\n` +
+          `Total Required: ${costs.totalCostSOL} SOL ($${costs.totalCostUSD})\n\n` +
+          `Your Balance: ${balanceInSol.toFixed(4)} SOL\n\n` +
+          `Note: The storage costs are refundable when you sell or transfer the NFT.`
+        );
       }
 
       // Return cost estimation first for user confirmation
@@ -97,6 +120,7 @@ export const useMintNFT = () => {
         costs: {
           networkFee: costs.networkFee,
           rentExemption: costs.rentExemption,
+          metadataRent: costs.metadataRent,
           totalCostSOL: costs.totalCostSOL,
           totalCostUSD: costs.totalCostUSD,
           solPrice: costs.solPrice

@@ -10,10 +10,8 @@ import { Search, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { useAccount } from 'wagmi';
 export default function FamilyTreePage() {
   const { data: session } = useSession();
-  const { address, isConnected } = useAccount();
   
   const router = useRouter();
   const pathname = usePathname();

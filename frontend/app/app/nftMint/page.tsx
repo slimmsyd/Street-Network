@@ -10,7 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useState, useEffect } from 'react';    
+import { useState, useEffect, useCallback } from 'react';    
 import '@solana/wallet-adapter-react-ui/styles.css';
 import Image from 'next/image';
 import { useMintNFT } from '@/hooks/useMintNFT';
@@ -45,7 +45,7 @@ export default function NFTMintPage() {
     mintPrice: 0, // in SOL
     remainingSupply: 144000,
     uniqueHolders: 0,
-    isLoading: true,
+    isLoading: false,
   });
   const [isMinting, setIsMinting] = useState(false);
   const [transactionCost, setTransactionCost] = useState<TransactionCost>({
@@ -67,7 +67,7 @@ export default function NFTMintPage() {
     router.push(`/app/${page}`);
   };
 
-  const fetchCollectionData = async () => {
+  const fetchCollectionData = useCallback(async () => {
     try {
       const umi = createUmi(RPC_ENDPOINT);
       const collectionMintKey = COLLECTION_CONFIG.address;
@@ -81,33 +81,55 @@ export default function NFTMintPage() {
           return null;
         });
 
-      if (collectionNft) {
-        console.log('Collection NFT found:', {
-          name: collectionNft.metadata.name,
-          symbol: collectionNft.metadata.symbol,
-          uri: collectionNft.metadata.uri,
-          collection: collectionNft.metadata.collection
+      if (!collectionNft) {
+        console.log('No collection NFT found, showing default state');
+        setCollectionData({
+          totalSupply: COLLECTION_CONFIG.totalSupply,
+          mintedCount: 0,
+          mintPrice: 0,
+          remainingSupply: COLLECTION_CONFIG.totalSupply,
+          uniqueHolders: 0,
+          isLoading: false,
         });
+        return;
       }
 
       // Get all metadata accounts that match our collection
       const metadataProgramId = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
-      const allMetadataAccounts = await connection.getProgramAccounts(
-        metadataProgramId,
-        {
-          filters: [
-            {
-              memcmp: {
-                offset: 326, // Offset for collection parent
-                bytes: collectionMintKey
+      let allMetadataAccounts = null;
+      
+      try {
+        allMetadataAccounts = await connection.getProgramAccounts(
+          metadataProgramId,
+          {
+            filters: [
+              {
+                memcmp: {
+                  offset: 326,
+                  bytes: collectionMintKey
+                }
+              },
+              {
+                dataSize: 679,
               }
-            },
-            {
-              dataSize: 679,
-            }
-          ]
-        }
-      );
+            ]
+          }
+        );
+      } catch (error) {
+        console.error('Error fetching metadata accounts:', error);
+      }
+
+      if (!allMetadataAccounts) {
+        setCollectionData({
+          totalSupply: COLLECTION_CONFIG.totalSupply,
+          mintedCount: 0,
+          mintPrice: 0,
+          remainingSupply: COLLECTION_CONFIG.totalSupply,
+          uniqueHolders: 0,
+          isLoading: false,
+        });
+        return;
+      }
 
       console.log(`Found ${allMetadataAccounts.length} metadata accounts in collection`);
 
@@ -122,43 +144,45 @@ export default function NFTMintPage() {
           const name = new TextDecoder().decode(metadata.slice(66, 98)).replace(/\0/g, '').trim();
           const mintAddress = new PublicKey(metadata.slice(1, 33));
           
-          console.log('Processing NFT:', {
-            name,
-            mintAddress: mintAddress.toString()
-          });
-
           // Get all token accounts for this mint
-          const tokenAccounts = await connection.getTokenLargestAccounts(mintAddress);
+          let tokenAccounts = null;
+          try {
+            tokenAccounts = await connection.getTokenLargestAccounts(mintAddress);
+          } catch (error) {
+            console.error('Error fetching token accounts:', error);
+            continue;
+          }
+
+          if (!tokenAccounts) continue;
           
           for (const tokenAccount of tokenAccounts.value) {
-            const accountInfo = await connection.getParsedAccountInfo(tokenAccount.address);
-            if (accountInfo.value && 'parsed' in accountInfo.value.data) {
-              const owner = accountInfo.value.data.parsed.info.owner;
-              
-              // Verify the token amount is 1 (NFT)
-              const amount = accountInfo.value.data.parsed.info.tokenAmount.amount;
-              if (amount === '1') {
-                uniqueOwners.add(owner);
-                uniqueNFTs.add(mintAddress.toString());
+            let accountInfo = null;
+            try {
+              accountInfo = await connection.getParsedAccountInfo(tokenAccount.address);
+            } catch (error) {
+              console.error('Error fetching account info:', error);
+              continue;
+            }
 
-                nftDetails.push({
-                  name,
-                  mint: mintAddress.toString(),
-                  owner,
-                  tokenAccount: tokenAccount.address.toString()
-                });
+            if (!accountInfo || !accountInfo.value || !('parsed' in accountInfo.value.data)) continue;
 
-                console.log('NFT holder found:', {
-                  name,
-                  mint: mintAddress.toString(),
-                  owner,
-                  tokenAccount: tokenAccount.address.toString()
-                });
-              }
+            const owner = accountInfo.value.data.parsed.info.owner;
+            const amount = accountInfo.value.data.parsed.info.tokenAmount.amount;
+            
+            if (amount === '1') {
+              uniqueOwners.add(owner);
+              uniqueNFTs.add(mintAddress.toString());
+              nftDetails.push({
+                name,
+                mint: mintAddress.toString(),
+                owner,
+                tokenAccount: tokenAccount.address.toString()
+              });
             }
           }
         } catch (error) {
           console.error('Error processing metadata account:', error);
+          continue;
         }
       }
 
@@ -166,7 +190,7 @@ export default function NFTMintPage() {
       const remainingSupply = COLLECTION_CONFIG.totalSupply - mintedCount;
       const uniqueHoldersCount = uniqueOwners.size;
       
-      console.log('Collection Stats from Blockchain:', {
+      console.log('Collection Stats:', {
         totalSupply: COLLECTION_CONFIG.totalSupply,
         mintedCount,
         remainingSupply,
@@ -185,17 +209,19 @@ export default function NFTMintPage() {
       });
     } catch (error) {
       console.error('Error fetching collection data:', error);
-      setCollectionData(prev => ({ ...prev, isLoading: false }));
+      // Set default state on error
+      setCollectionData({
+        totalSupply: COLLECTION_CONFIG.totalSupply,
+        mintedCount: 0,
+        mintPrice: 0,
+        remainingSupply: COLLECTION_CONFIG.totalSupply,
+        uniqueHolders: 0,
+        isLoading: false,
+      });
     }
-  };
+  }, [connection]);
 
-  // Helper function to format wallet address
-  const formatAddress = (address: string): string => {
-    if (!address) return '';
-    return `${address.slice(0, 4)}...${address.slice(-4)}`;
-  };
-
-  const fetchRecentMints = async () => {
+  const fetchRecentMints = useCallback(async () => {
     try {
       // Get recent signatures for the collection on mainnet
       const signatures = await connection.getSignaturesForAddress(
@@ -244,21 +270,50 @@ export default function NFTMintPage() {
     } catch (error) {
       console.error('Error fetching recent mints from mainnet:', error);
     }
+  }, [connection, collectionData.mintedCount]);
+
+  // Helper function to format wallet address
+  const formatAddress = (address: string): string => {
+    if (!address) return '';
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
-  // Update useEffect to also fetch recent mints
+  // Initialize mounted state
   useEffect(() => {
     setMounted(true);
-    fetchCollectionData();
-    fetchRecentMints();
+  }, []);
+
+  // Initialize data fetching
+  const fetchData = useCallback(async () => {
+    if (!mounted || !connection) return;
+
+    try {
+      console.log('Initializing data fetch...');
+      setCollectionData(prev => ({ ...prev, isLoading: false }));
+      
+      await Promise.all([
+        fetchCollectionData(),
+        fetchRecentMints()
+      ]);
+    } catch (error) {
+      console.error('Error initializing data:', error);
+      setCollectionData(prev => ({
+        ...prev,
+        isLoading: false
+      }));
+    }
+  }, [mounted, connection, fetchCollectionData, fetchRecentMints]);
+
+  // Set up data fetching and interval
+  useEffect(() => {
+    fetchData();
 
     const interval = setInterval(() => {
-      fetchCollectionData();
-      fetchRecentMints();
+      fetchData();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   const handleMint = async () => {
     if (!walletPublicKey) {
@@ -313,6 +368,15 @@ export default function NFTMintPage() {
       setIsMinting(false);
     }
   };
+
+  // Add mounted check to the render
+  if (!mounted) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#FAFAFA]">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#2B6CB0]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#FAFAFA]">
