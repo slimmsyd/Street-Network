@@ -39,21 +39,19 @@ export default function RootLayout({
       <body className={inter.className}>
         <GoogleTagManager gtmId="G-F3F86GSCB4" />
         <SessionWrapper>
-          <AuthProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <SolanaWalletProvider>
-                <div className="flex min-h-screen flex-col">
-                  <NavWrapper />
-                  <main className="flex-1">{children}</main>
-                </div>
-              </SolanaWalletProvider>
-            </ThemeProvider>
-          </AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SolanaWalletProvider>
+              <div className="flex min-h-screen flex-col">
+                <NavWrapper />
+                <main className="flex-1">{children}</main>
+              </div>
+            </SolanaWalletProvider>
+          </ThemeProvider>
         </SessionWrapper>
       </body>
     </html>

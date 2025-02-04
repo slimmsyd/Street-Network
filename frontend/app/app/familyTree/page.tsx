@@ -65,7 +65,7 @@ export default function FamilyTreePage() {
     setIsLoading(true);
     try {
       const email = session?.user?.email;
-      const walletAddress = address; // Using address from useAccount
+        const walletAddress = session?.user?.walletAddress; // Using address from useAccount
       
       console.log("User auth details:", { email, walletAddress });
       

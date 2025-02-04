@@ -11,7 +11,7 @@ import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { UserDetails } from "@/types/user";
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-// import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 
 interface InvitationData {
   email: string;
@@ -36,8 +36,9 @@ export default function SignUpPage() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
-  // const { address, isConnected } = useAccount();
-  // const { disconnect } = useDisconnect();
+  const { address, isConnected } = useAccount();
+  const { open } = useWeb3Modal();
+  const { disconnect } = useDisconnect();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -108,14 +109,14 @@ export default function SignUpPage() {
   };
 
   // Update form data when wallet is connected
-  // useEffect(() => {
-  //   if (isConnected && address) {
-  //     setFormData(prev => ({
-  //       ...prev,
-  //       walletAddress: address
-  //     }));
-  //   }
-  // }, [isConnected, address]);
+  useEffect(() => {
+    if (isConnected && address) {
+      setFormData(prev => ({
+        ...prev,
+        walletAddress: address
+      }));
+    }
+  }, [isConnected, address]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("Handling submit");
@@ -398,19 +399,19 @@ export default function SignUpPage() {
 
             {/* Wallet Connection Button */}
             <div className="relative">
-              {/* {isConnected ? ( */}
+              {isConnected ? (
                 <div className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-4">
-                  {/* <span className="text-sm text-gray-600">Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span> */}
+                  <span className="text-sm text-gray-600">Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
                   <Button
                     type="button"
-                    // onClick={() => disconnect()} 
+                    onClick={() => disconnect()}
                     variant="outline"
                     className="text-red-600 hover:text-red-700 border-red-200"
                   >
                     Disconnect
                   </Button>
                 </div>
-              {/* ) : ( */}
+              ) : (
                 <Button
                   type="button"
                   onClick={() => open()}
@@ -418,7 +419,7 @@ export default function SignUpPage() {
                 >
                   Connect Wallet
                 </Button>
-              {/* )} */}
+              )}
             </div>
 
             {activeTab === 'login' && (
