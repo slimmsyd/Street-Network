@@ -140,3 +140,21 @@ body{
 .wallet-adapter-modal-wrapper {
   z-index: 1000 !important;
 }
+
+@keyframes neon-pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; text-shadow: 0 0 10px #10b98155; }
+  100% { opacity: 0.8; }
+}
+
+.neon-text {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+.hover-tilt {
+  transition: transform 0.3s ease;
+}
+
+.hover-tilt:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+}

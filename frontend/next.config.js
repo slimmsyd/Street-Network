@@ -4,7 +4,8 @@ const nextConfig = {
     domains: [
       'teal-artistic-bonobo-612.mypinata.cloud',
       'gateway.pinata.cloud',
-      'api.dicebear.com'
+      'api.dicebear.com',
+      'arweave.net'
     ],
   },
   experimental: {
@@ -31,7 +32,10 @@ const nextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        crypto: require.resolve('crypto-browserify'),
+        fs: false,
+        os: false,
+        path: false,
+        crypto: false,
       };
     }
     return config;

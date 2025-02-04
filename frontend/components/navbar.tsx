@@ -49,11 +49,10 @@ const routes: Route[] = [
 
 
 export default function Navbar() {
-  const { chain, address, connector } = useAccount();
-  const { disconnect } = useDisconnect();
+  // const { chain, address, connector } = useAccount();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const formatted_address = address ? `${address.slice(0, 7)}` : undefined;
-  const { open } = useWeb3Modal();
+  // const formatted_address = address ? `${address.slice(0, 7)}` : undefined;
+  // const { open } = useWeb3Modal();
 
   const handleConnect = async () => {
     try {
