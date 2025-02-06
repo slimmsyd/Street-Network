@@ -120,7 +120,9 @@ export function DashboardSidebar({
       <div className="hidden md:block w-64 border-r border-[#DDDDDD] pointer-events-none">
         <div className="relative h-full">
           <SidebarContent />
-          <div className="absolute inset-0 backdrop-blur-sm bg-white/30 pointer-events-auto" />
+          {activePage === 'nftMint' && (
+            <div className="absolute inset-0 backdrop-blur-sm bg-white/30 pointer-events-auto" />
+          )}
         </div>
       </div>
 

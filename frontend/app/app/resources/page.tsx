@@ -53,12 +53,28 @@ export default function ResourcesPage() {
 
       if (data.success) {
         setCategories(data.categories);
-        // Group resources by category (tag)
-        const resourcesByCategory = data.categories.map((category: ResourceCategory) => ({
-          category,
-          resources: data.resources.filter((r: Resource) => r.tags?.includes(category)) || [],
-          isOpen: false
-        }));
+        // Create a Set to track unique links
+        const seenLinks = new Set();
+        // Group resources by category (tag) and filter duplicates
+        const resourcesByCategory = data.categories
+          .map((category: ResourceCategory) => ({
+            category,
+            resources: data.resources
+              .filter((r: Resource) => {
+                if (r.tags?.includes(category)) {
+                  // Check if we've seen this link before
+                  if (seenLinks.has(r.link)) {
+                    return false; // Skip duplicate links
+                  }
+                  seenLinks.add(r.link);
+                  return true;
+                }
+                return false;
+              }) || [],
+            isOpen: false
+          }))
+          // Filter out categories with zero resources
+          .filter((section: ResourceSection) => section.resources.length > 0);
         setSections(resourcesByCategory);
       } else {
         setError('Failed to fetch resources');
@@ -90,14 +106,12 @@ export default function ResourcesPage() {
   return (
     <ResizablePanelGroup direction="horizontal" className="min-h-screen">
       {/* Left Sidebar */}
-      <ResizablePanel defaultSize={20} minSize={15} maxSize={25}>
         <DashboardSidebar
           activePage="resources"
           onNavigate={handleNavigation}
           userName={session?.user?.name || "User"}
           userAvatar={session?.user?.image || ""}
         />
-      </ResizablePanel>
 
       <ResizableHandle />
 
