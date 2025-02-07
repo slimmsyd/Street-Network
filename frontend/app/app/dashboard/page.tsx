@@ -498,6 +498,7 @@ export default function Dashboard() {
                         return uniqueDays;
                       }, new Set()).size || 0}
                     </h3>
+                    <p className="text-xs text-gray-400 mt-1">Since Feb 6, 2024</p>
                   </CardContent>
                 </Card>
 
