@@ -170,7 +170,7 @@ export default function Dashboard() {
   });
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'personal' | 'members'>('personal');
+  const [viewMode, setViewMode] = useState<'personal' | 'members' | 'global'>('personal');
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
     userId: userProfile?.user?.id || "unknown",
@@ -389,7 +389,7 @@ export default function Dashboard() {
   if (!mounted) return null;
 
   return (
-    <div className="flex h-screen bg-[#FAFAFA]">
+    <div className="flex flex-col lg:flex-row h-screen bg-[#FAFAFA]">
       <DashboardSidebar
         activePage="dashboard"
         onNavigate={handleNavigation}
@@ -398,83 +398,91 @@ export default function Dashboard() {
         rewardPoints={userData?.total_interactions || 0}
       />
       
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-[1400px] mx-auto p-8">
-          {/* Simplified Header */}
-          <div className="flex justify-between items-center mb-10">
+      <main className="flex-1 overflow-auto w-full">
+        <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
+          {/* Responsive Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 lg:mb-10">
             <div className="space-y-1">
-              <h1 className="text-2xl font-medium text-gray-900">
-                {viewMode === 'personal' ? `Welcome back, ${userData?.username || 'User'}` : 'Community Overview'}
+              <h1 className="text-xl sm:text-2xl font-medium text-gray-900">
+                {viewMode === 'global' ? 'Community Analytics' : 'Community Members'}
               </h1>
               <p className="text-sm text-gray-500">
-                {viewMode === 'personal' ? 'Your AI architect dashboard' : 'Monitor community engagement'}
+                {viewMode === 'global' 
+                  ? 'Overall community engagement metrics' 
+                  : 'Individual member activity overview'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-                <Button 
-                  variant={viewMode === 'personal' ? 'default' : 'ghost'} 
-                  onClick={() => setViewMode('personal')}
-                  className="rounded-lg text-sm px-4"
-                  size="sm"
-                >
-                  Personal
-                </Button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              {/* Member Selection Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto rounded-xl border-gray-200">
+                    <Avatar className="h-5 w-5 mr-2">
+                      <AvatarImage src={userData?.avatar || ''} />
+                      <AvatarFallback>{userData?.username?.[0] || '?'}</AvatarFallback>
+                    </Avatar>
+                    {userData?.username || 'Select Member'}
+                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  {members.map((member) => (
+                    <DropdownMenuItem
+                      key={member.user_id}
+                      onClick={() => {
+                        setSelectedUserId(member.user_id);
+                        setViewMode('global');
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.username[0]}</AvatarFallback>
+                      </Avatar>
+                      {member.username}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* View Mode Toggle */}
+              <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-full sm:w-auto">
                 <Button 
                   variant={viewMode === 'members' ? 'default' : 'ghost'} 
                   onClick={() => setViewMode('members')}
-                  className="rounded-lg text-sm px-4"
+                  className="flex-1 sm:flex-none rounded-lg text-sm px-4"
                   size="sm"
                 >
                   Members
                 </Button>
+                <Button 
+                  variant={viewMode === 'global' ? 'default' : 'ghost'} 
+                  onClick={() => setViewMode('global')}
+                  className="flex-1 sm:flex-none rounded-lg text-sm px-4"
+                  size="sm"
+                >
+                  Global
+                </Button>
               </div>
-              {viewMode === 'personal' && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="rounded-xl border-gray-200">
-                      <Avatar className="h-5 w-5 mr-2">
-                        <AvatarImage src={userData?.avatar || ''} />
-                        <AvatarFallback>{userData?.username?.[0]}</AvatarFallback>
-                      </Avatar>
-                      {userData?.username || 'Select User'}
-                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[200px]">
-                    {members.map((member) => (
-                      <DropdownMenuItem
-                        key={member.user_id}
-                        onClick={() => setSelectedUserId(member.user_id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback>{member.username[0]}</AvatarFallback>
-                        </Avatar>
-                        {member.username}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </div>
 
           {viewMode === 'members' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {members.map((member) => (
                 <Card key={member.user_id} className="bg-white/80 backdrop-blur-xl border-0 shadow-sm rounded-2xl hover:shadow-md transition-all">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                         <AvatarImage src={member.avatar} />
                         <AvatarFallback>{member.username[0]}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-medium text-gray-900 truncate">{member.username}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="rounded-full">
+                        <h3 className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                          {member.username}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="rounded-full text-xs">
                             {member.total_interactions} interactions
                           </Badge>
                           <span className="text-xs text-gray-400">
@@ -485,10 +493,10 @@ export default function Dashboard() {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className="rounded-xl"
+                        className="rounded-xl hidden sm:flex"
                         onClick={() => {
                           setSelectedUserId(member.user_id);
-                          setViewMode('personal');
+                          setViewMode('global');
                         }}
                       >
                         <ArrowRight className="h-4 w-4" />
@@ -499,117 +507,125 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-12 gap-6">
-              {/* Stats Overview */}
-              <div className="col-span-12 grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6">
+              {/* Stats Overview - Full width on mobile */}
+              <div className="col-span-full grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-blue-50 rounded-xl">
-                        <Users className="h-5 w-5 text-blue-500" />
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-500">Total Interactions</p>
-                    <h3 className="text-2xl font-semibold mt-1 text-black">{userData?.total_interactions || 0}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Total Interactions</p>
+                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
+                      {userData?.total_interactions || 0}
+                    </h3>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-green-50 rounded-xl">
-                        <GitBranch className="h-5 w-5 text-green-500" />
+                        <GitBranch className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-500">Active Channels</p>
-                    <h3 className="text-2xl font-semibold mt-1 text-black">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Active Channels</p>
+                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
                       {new Set(userData?.interactions?.map(i => i.channel_id)).size || 0}
                     </h3>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-purple-50 rounded-xl">
-                        <Clock className="h-5 w-5 text-purple-500" />
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-500">Days Active</p>
-                    <h3 className="text-2xl font-semibold mt-1 text-black">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Days Active</p>
+                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
                       {Math.round((new Date().getTime() - new Date(userData?.first_interaction || Date.now()).getTime()) / (1000 * 60 * 60 * 24))}
                     </h3>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-orange-50 rounded-xl">
-                        <Crown className="h-5 w-5 text-orange-500" />
+                        <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-500">Engagement Rate</p>
-                    <h3 className="text-2xl font-semibold mt-1 text-black">{statsData.prioritized.value}%</h3>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Engagement Rate</p>
+                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
+                      {statsData.prioritized.value}%
+                    </h3>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Activity Chart */}
-              <Card className="col-span-8 bg-white border-0 shadow-sm rounded-2xl">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 className="text-base font-medium text-gray-900">Activity Overview</h3>
-                      <p className="text-sm text-gray-500 mt-1">Monthly interaction analytics</p>
-                    </div>
-                  </div>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={focusData}>
-                        <defs>
-                          <linearGradient id="colorInteractions" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                        <XAxis dataKey="name" stroke="#9CA3AF" />
-                        <YAxis hide />
-                        <Tooltip 
-                          contentStyle={{ 
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            border: 'none',
-                            borderRadius: '12px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                          }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="interactions" 
-                          stroke="#4F46E5" 
-                          strokeWidth={2}
-                          fill="url(#colorInteractions)" 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity & Channel Stats */}
-              <div className="col-span-4 space-y-6">
+              {/* Activity Chart - Full width on mobile */}
+              <div className="col-span-full lg:col-span-8">
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
-                    <h3 className="text-base font-medium text-gray-900 mb-4">Recent Activity</h3>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-sm sm:text-base font-medium text-gray-900">Activity Overview</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Monthly interaction analytics</p>
+                      </div>
+                    </div>
+                    <div className="h-[250px] sm:h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={focusData}>
+                          <defs>
+                            <linearGradient id="colorInteractions" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
+                              <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                          <XAxis dataKey="name" stroke="#9CA3AF" />
+                          <YAxis hide />
+                          <Tooltip 
+                            contentStyle={{ 
+                              background: 'rgba(255, 255, 255, 0.8)',
+                              border: 'none',
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="interactions" 
+                            stroke="#4F46E5" 
+                            strokeWidth={2}
+                            fill="url(#colorInteractions)" 
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Side Cards - Stack on mobile */}
+              <div className="col-span-full lg:col-span-4 space-y-4 sm:space-y-6">
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-4">Recent Activity</h3>
                     <div className="space-y-4">
                       {meetings.slice(0, 3).map((meeting, index) => (
                         <div key={index} className="flex items-center gap-3">
                           <div className="p-2 bg-gray-50 rounded-xl">
-                            <FileText className="h-4 w-4 text-gray-500" />
+                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{meeting.title}</p>
+                            <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                              {meeting.title}
+                            </p>
                             <p className="text-xs text-gray-500 mt-0.5">{meeting.date}</p>
                           </div>
                         </div>
@@ -619,14 +635,14 @@ export default function Dashboard() {
                 </Card>
 
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-6">
-                    <h3 className="text-base font-medium text-gray-900 mb-4">Channel Activity</h3>
+                  <CardContent className="p-4 sm:p-6">
+                    <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-4">Channel Activity</h3>
                     <div className="space-y-4">
                       {developedAreas.slice(0, 4).map((area, index) => (
                         <div key={index}>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-gray-600">{area.name}</span>
-                            <span className="text-sm text-gray-500">{area.progress}%</span>
+                            <span className="text-xs sm:text-sm text-gray-600">{area.name}</span>
+                            <span className="text-xs sm:text-sm text-gray-500">{area.progress}%</span>
                           </div>
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
