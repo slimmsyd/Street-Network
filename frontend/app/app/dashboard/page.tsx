@@ -326,68 +326,8 @@ export default function Dashboard() {
     router.push(`/app/${page}`);
   };
 
-  const handleUploadToArweave = async () => {
-    for (const file of selectedFiles) {
-      try {
-        setUploadStatus((prev) => ({ ...prev, [file.name]: "uploading" }));
-        const result = await uploadFile(file);
 
-        if (result.status === "success") {
-          setUploadStatus((prev) => ({ ...prev, [file.name]: "success" }));
 
-          // Store transaction details
-          setTransactions((prev) => ({
-            ...prev,
-            [file.name]: {
-              id: result.transactionId,
-              status: "success",
-              timestamp: new Date().toISOString(),
-              size: file.size,
-              type: file.type,
-            },
-          }));
-
-          // Log detailed information
-          console.log("Transaction Details:", {
-            fileName: file.name,
-            transactionId: result.transactionId,
-            fileSize: `${(file.size / 1024).toFixed(2)} KB`,
-            fileType: file.type,
-            timestamp: new Date().toISOString(),
-          });
-        } else {
-          setUploadStatus((prev) => ({ ...prev, [file.name]: "error" }));
-          console.error(`Failed to upload ${file.name}:`, result.message);
-        }
-      } catch (err) {
-        setUploadStatus((prev) => ({ ...prev, [file.name]: "error" }));
-        console.error(`Error uploading ${file.name}:`, err);
-      }
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setSelectedFiles(Array.from(e.dataTransfer.files));
-    }
-  };
-
-  const handleNodeClick = (nodeId: string) => {
-    router.push(`/app/familyTree/${nodeId}`);
-  };
 
   if (!mounted) return null;
 

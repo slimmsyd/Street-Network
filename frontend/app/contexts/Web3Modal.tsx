@@ -10,9 +10,13 @@ const queryClient = new QueryClient();
 
 if (typeof window !== 'undefined') {
   try {
+    if (!process.env.NEXT_PUBLIC_PROJECT_ID) {
+      throw new Error('NEXT_PUBLIC_PROJECT_ID is not set');
+    }
+    
     createWeb3Modal({
       wagmiConfig: config,
-      projectId: process.env.NEXT_PUBLIC_PROJECT_ID as string,
+      projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
       enableAnalytics: true,
       enableOnramp: true,
       themeMode: 'dark',
@@ -20,6 +24,11 @@ if (typeof window !== 'undefined') {
     });
   } catch (error) {
     console.error('Error initializing Web3Modal:', error);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', (e) => {
+        console.error('Web3Modal Error:', e);
+      });
+    }
   }
 }
 
