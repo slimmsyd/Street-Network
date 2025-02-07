@@ -36,6 +36,7 @@ import {
   FileImage,
   FileVideo,
   Upload,
+  ArrowRight,
 } from "lucide-react";
 import {
   ResizableHandle,
@@ -59,7 +60,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useArweaveUpload } from "@/hooks/useArweaveUpload";
 import { useRouter, usePathname } from "next/navigation";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
@@ -67,6 +68,21 @@ import { useUserImages } from "@/hooks/useUserImages";
 import { RightDashboard } from "@/components/RightDashboard";
 import { useSession } from "next-auth/react";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { motion } from 'framer-motion';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+} from 'recharts';
+import { Badge } from '@/components/ui/badge';
 
 interface TransactionDetails {
   id: string;
@@ -74,6 +90,60 @@ interface TransactionDetails {
   timestamp: string;
   size: number;
   type: string;
+}
+
+interface UserInteraction {
+  type: string;
+  timestamp: string;
+  channel_id: string;
+  channel_name: string;
+  guild_id: string;
+  guild_name: string;
+  command: string | null;
+  message: string;
+}
+
+interface UserDetails {
+  last_channel: string;
+  last_guild: string;
+  last_interaction: string;
+  last_message: string;
+  total_interactions: number;
+  username: string;
+}
+
+interface UserData {
+  _id: string;
+  user_id: string;
+  first_interaction: string;
+  interactions: UserInteraction[];
+  details: UserDetails;
+}
+
+interface FocusDataPoint {
+  name: string;
+  interactions: number;
+  channels: number;
+}
+
+interface DevelopedArea {
+  name: string;
+  progress: number;
+}
+
+interface Meeting {
+  time: string;
+  title: string;
+  platform: string;
+  date: string;
+}
+
+interface Member {
+  user_id: string;
+  username: string;
+  avatar?: string;
+  total_interactions: number;
+  last_active: string;
 }
 
 export default function Dashboard() {
@@ -87,6 +157,20 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<{
     [key: string]: TransactionDetails;
   }>({});
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [channelStats, setChannelStats] = useState<{ name: string; count: number }[]>([]);
+  const [topUsers, setTopUsers] = useState<{ username: string; interactions: number }[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [focusData, setFocusData] = useState<FocusDataPoint[]>([]);
+  const [developedAreas, setDevelopedAreas] = useState<DevelopedArea[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [statsData, setStatsData] = useState({
+    prioritized: { value: 0, label: '' },
+    additional: { value: 0, label: '' }
+  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'personal' | 'members'>('personal');
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
     userId: userProfile?.user?.id || "unknown",
@@ -105,6 +189,135 @@ export default function Dashboard() {
   const router = useRouter();
   const pathname = usePathname();
   const currentMember = pathname.split("/").pop() || "me";
+
+  useEffect(() => {
+    setMounted(true);
+    fetchMembers();
+    if (selectedUserId) {
+      console.log("Fetching data for user:", selectedUserId);
+      fetchUserData(selectedUserId);
+    }
+  }, [selectedUserId]);
+
+  const fetchMembers = async () => {
+    try {
+      const response = await fetch('/api/discord/members');
+      const data = await response.json();
+      setMembers(data);
+      
+      if (!selectedUserId && data.length > 0) {
+        setSelectedUserId(data[0].user_id);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
+
+  const fetchUserData = async (userId?: string) => {
+    try {
+      if (!userId) {
+        console.error('No userId provided');
+        return;
+      }
+
+      console.log("Fetching user data for ID:", userId);
+      const response = await fetch(`/api/discord/user-data?userId=${userId}`, {
+        // Add cache: 'no-store' to prevent caching
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        console.error('Error response:', response.status);
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Received user data for ID", userId, ":", data);
+      
+      if (!data || data.error) {
+        console.error('No user data found or error:', data.error);
+        return;
+      }
+
+      setUserData(data);
+      
+      // Process interaction data for the focus chart
+      const interactionsByMonth: { [key: string]: { count: number, channels: Set<string> } } = {};
+      data.interactions?.forEach((interaction: UserInteraction) => {
+        const date = new Date(interaction.timestamp);
+        const monthKey = date.toLocaleString('default', { month: 'short' });
+        
+        if (!interactionsByMonth[monthKey]) {
+          interactionsByMonth[monthKey] = { count: 0, channels: new Set() };
+        }
+        interactionsByMonth[monthKey].count++;
+        interactionsByMonth[monthKey].channels.add(interaction.channel_id);
+      });
+
+      // Convert to focus chart data
+      const focusChartData = Object.entries(interactionsByMonth).map(([month, stats]) => ({
+        name: month,
+        interactions: stats.count,
+        channels: stats.channels.size,
+      }));
+      setFocusData(focusChartData);
+
+      // Process channel statistics using channel_name instead of channel_id
+      const channelCounts = new Map<string, number>();
+      data.interactions?.forEach((interaction: UserInteraction) => {
+        // Use channel_name instead of channel_id
+        const channelName = interaction.channel_name || interaction.channel_id;
+        const count = channelCounts.get(channelName) || 0;
+        channelCounts.set(channelName, count + 1);
+      });
+      
+      // Get top channels
+      const sortedChannels = Array.from(channelCounts.entries())
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([name, count]) => ({
+          name: name.replace(/[📚🛠️📝-]/g, '').trim(), // Clean up channel name by removing emojis
+          progress: Math.round((count / (data.total_interactions || 1)) * 100)
+        }));
+      
+      console.log("Processed channel statistics:", sortedChannels);
+      setDevelopedAreas(sortedChannels);
+
+      // Process recent activity for meetings section
+      const recentActivity = data.interactions
+        ?.sort((a: UserInteraction, b: UserInteraction) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        )
+        .slice(0, 4)
+        .map((interaction: UserInteraction) => ({
+          time: new Date(interaction.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          title: interaction.message || 'Interaction',
+          platform: interaction.channel_id,
+          date: new Date(interaction.timestamp).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+        }));
+      setMeetings(recentActivity);
+
+      // Calculate stats for the cards
+      const totalMessages = data.interactions?.length || 0;
+      const uniqueChannels = new Set(data.interactions?.map((i: UserInteraction) => i.channel_id)).size;
+      
+      setStatsData({
+        prioritized: {
+          value: Math.round((totalMessages / (data.total_interactions || 1)) * 100),
+          label: 'Message Rate'
+        },
+        additional: {
+          value: Math.round((uniqueChannels / 10) * 100), // Assuming 10 is the total number of channels
+          label: 'Channel Activity'
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const handleNavigation = (page: string) => {
     router.push(`/app/${page}`);
@@ -173,348 +386,264 @@ export default function Dashboard() {
     router.push(`/app/familyTree/${nodeId}`);
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-[#FAFAFA]">
       <DashboardSidebar
         activePage="dashboard"
         onNavigate={handleNavigation}
-        userName={userProfile?.user?.name?.split(" ")[0] || "User"}
-        userAvatar={userProfile?.user?.profileImage || ""}
-        rewardPoints={10}
+        userName={userData?.username || "User"}
+        userAvatar={userData?.avatar || ""}
+        rewardPoints={userData?.total_interactions || 0}
       />
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={80} minSize={30} className="flex-1">
-          <div className="flex-1 flex flex-col bg-white">
-            <div className="p-4 border-zinc-200">
-              {/* <div className="flex gap-4 mb-4">
-                <div className="relative flex-1">
-                  <Search className="  absolute left-2 top-2.5 h-4 w-4 text-zinc-300" />
-                  <Input
-                    placeholder="Search your legacy"
-                    className="pl-8 bg-white border-zinc-100 focus:ring-zinc-200 focus:border-zinc-200 text-zinc-500 placeholder:text-zinc-300"
-                  />
-                </div>
-              </div> */}
-
-              <div className="flex gap-4">
-                {/* <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="bg-white border-zinc-200 rounded-xl px-4 py-2 text-sm font-normal text-zinc-800 "
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Type
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Documents</DropdownMenuItem>
-                    <DropdownMenuItem>Photos</DropdownMenuItem>
-                    <DropdownMenuItem>Videos</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
-
-                {/* <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="bg-white border-zinc-200 rounded-xl px-4 py-2 text-sm font-normal text-zinc-800 "
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      People
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Family</DropdownMenuItem>
-                    <DropdownMenuItem>Friends</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
-
-                {/* <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="bg-white border-zinc-200 rounded-xl px-4 py-2 text-sm font-normal text-zinc-800"
-                    >
-                      <Folder className="mr-2 h-4 w-4" />
-                      Date
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Last 7 days</DropdownMenuItem>
-                    <DropdownMenuItem>Last 30 days</DropdownMenuItem>
-                    <DropdownMenuItem>Last year</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
-              </div>
+      
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-[1400px] mx-auto p-8">
+          {/* Simplified Header */}
+          <div className="flex justify-between items-center mb-10">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-medium text-gray-900">
+                {viewMode === 'personal' ? `Welcome back, ${userData?.username || 'User'}` : 'Community Overview'}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {viewMode === 'personal' ? 'Your AI architect dashboard' : 'Monitor community engagement'}
+              </p>
             </div>
-
-            <div className="flex-1 p-4 flex flex-col items-center justify-center text-center">
-              <h2 className="text-xl font-semibold mb-2 text-zinc-800">
-               Your Street Network Timline From Discord Will Go Here
-              </h2>
-              <div className="mb-4">
-                <img
-                  src="/dashboard/Network.png"
-                  alt="Women In Bitcoin"
-                  className="w-64 h-auto"
-                />
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                <Button 
+                  variant={viewMode === 'personal' ? 'default' : 'ghost'} 
+                  onClick={() => setViewMode('personal')}
+                  className="rounded-lg text-sm px-4"
+                  size="sm"
+                >
+                  Personal
+                </Button>
+                <Button 
+                  variant={viewMode === 'members' ? 'default' : 'ghost'} 
+                  onClick={() => setViewMode('members')}
+                  className="rounded-lg text-sm px-4"
+                  size="sm"
+                >
+                  Members
+                </Button>
               </div>
-
-              <Dialog>
-                <DialogTrigger asChild>
-                  {/* <Button
-                    size="sm"
-                    className="gap-2 bg-[#F0EFFF] text-[#3B35C3] hover:bg-[#E6E5FF] hover:text-[#3B35C3]"
-                  >
-                    <Plus size={16} />
-                    Add
-                  </Button> */}
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Add to Your Legacy</DialogTitle>
-                    <DialogDescription>
-                      Upload files to preserve your family's memories. These
-                      files will be immutable and private to your family.
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label>Upload Type</Label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 justify-start gap-2"
-                        >
-                          <FileImage size={16} />
-                          Image
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 justify-start gap-2"
-                        >
-                          <FileVideo size={16} />
-                          Video
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 justify-start gap-2"
-                        >
-                          <FileText size={16} />
-                          Text
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors
-                        ${
-                          dragActive
-                            ? "border-[#3B35C3] bg-[#F0EFFF]"
-                            : "border-zinc-200"
-                        }`}
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                    >
-                      <Input
-                        type="file"
-                        className="hidden"
-                        id="file-upload"
-                        multiple
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            setSelectedFiles(Array.from(e.target.files));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="file-upload" className="cursor-pointer">
-                        <Upload
-                          className={`w-8 h-8 mx-auto mb-2 ${
-                            dragActive ? "text-[#3B35C3]" : "text-zinc-400"
-                          }`}
-                        />
-                        <p
-                          className={`text-sm ${
-                            dragActive ? "text-[#3B35C3]" : "text-zinc-600"
-                          }`}
-                        >
-                          {dragActive
-                            ? "Drop files here"
-                            : "Drag and drop files here, or click to select"}
-                        </p>
-                      </Label>
-                    </div>
-
-                    {selectedFiles.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-zinc-800">
-                          Selected files:
-                        </div>
-                        <ScrollArea className="h-[150px] w-full rounded-md border border-zinc-200 p-2">
-                          <div className="space-y-2">
-                            {selectedFiles.map((file, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-zinc-50 p-2 rounded-lg"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {file.type.startsWith("image/") ? (
-                                    <FileImage
-                                      size={16}
-                                      className="text-zinc-500"
-                                    />
-                                  ) : file.type.startsWith("video/") ? (
-                                    <FileVideo
-                                      size={16}
-                                      className="text-zinc-500"
-                                    />
-                                  ) : (
-                                    <FileText
-                                      size={16}
-                                      className="text-zinc-500"
-                                    />
-                                  )}
-                                  <div className="flex flex-col">
-                                    <span className="text-sm text-zinc-600 truncate max-w-[200px]">
-                                      {file.name}
-                                    </span>
-                                    <span className="text-xs text-zinc-400">
-                                      {(file.size / 1024).toFixed(1)} KB
-                                    </span>
-                                  </div>
-                                  {uploadStatus[file.name] && (
-                                    <div className="flex flex-col ml-2">
-                                      <span
-                                        className={`text-xs ${
-                                          uploadStatus[file.name] === "success"
-                                            ? "text-green-500"
-                                            : uploadStatus[file.name] ===
-                                              "error"
-                                            ? "text-red-500"
-                                            : "text-blue-500"
-                                        }`}
-                                      >
-                                        {uploadStatus[file.name]}
-                                      </span>
-                                      {transactions[file.name] && (
-                                        <span className="text-xs text-zinc-400">
-                                          TX:{" "}
-                                          {transactions[file.name].id.slice(
-                                            0,
-                                            8
-                                          )}
-                                          ...
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-700"
-                                  onClick={() =>
-                                    setSelectedFiles((files) =>
-                                      files.filter((_, i) => i !== index)
-                                    )
-                                  }
-                                >
-                                  <Trash2 size={16} />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                    )}
-                  </div>
-
-                  <DialogFooter className="flex flex-col gap-2">
-                    <p className="text-xs text-zinc-500 text-left">
-                      By uploading, you acknowledge that these files will be
-                      permanently stored and accessible only to your family
-                      members.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                      <DialogTrigger asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DialogTrigger>
-                      <Button
-                        className="bg-[#3B35C3] text-white hover:bg-[#2D2A9C]"
-                        onClick={handleUploadToArweave}
-                        disabled={isUploading || selectedFiles.length === 0}
+              {viewMode === 'personal' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="rounded-xl border-gray-200">
+                      <Avatar className="h-5 w-5 mr-2">
+                        <AvatarImage src={userData?.avatar || ''} />
+                        <AvatarFallback>{userData?.username?.[0]}</AvatarFallback>
+                      </Avatar>
+                      {userData?.username || 'Select User'}
+                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[200px]">
+                    {members.map((member) => (
+                      <DropdownMenuItem
+                        key={member.user_id}
+                        onClick={() => setSelectedUserId(member.user_id)}
+                        className="flex items-center gap-2"
                       >
-                        {isUploading ? "Uploading..." : "Upload to Legacy"}
-                      </Button>
-                    </div>
-                    {error && (
-                      <p className="text-xs text-red-500 mt-2">{error}</p>
-                    )}
-                    {uploadProgress && (
-                      <div className="w-full bg-zinc-100 rounded-full h-2 mt-2">
-                        <div
-                          className="bg-[#3B35C3] h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress.progress}%` }}
-                        />
-                      </div>
-                    )}
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              {/* Beta Feature Dialog */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    className="gap-2 mt-4 bg-[#FFE4E4] text-[#C33535] hover:bg-[#FFD5D5] hover:text-[#C33535]"
-                  >
-                    Coming Soon
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Feature Coming Soon!</DialogTitle>
-                    <DialogDescription>
-                      This feature will be released soon in beta. For now, we encourage you to invite as many family members as possible to start building your family tree. The more members you have, the richer your family legacy will be!
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter className="mt-4">
-                    <DialogTrigger asChild>
-                      <Button variant="outline">Close</Button>
-                    </DialogTrigger>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback>{member.username[0]}</AvatarFallback>
+                        </Avatar>
+                        {member.username}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle className="hidden md:flex bg-zinc-100 border-l border-r border-zinc-200" />
-        
-        <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
-          <RightDashboard
-            userName={userProfile?.user?.name?.split(" ")[0] || "User"}
-            userAvatar={userProfile?.user?.profileImage || ""}
-            userRole={userProfile?.user?.familyRole || "Member"}
-            familyMemberCount={0}
-            onInvite={() => {}}
-            onSendMessage={() => {}}
-          />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+
+          {viewMode === 'members' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {members.map((member) => (
+                <Card key={member.user_id} className="bg-white/80 backdrop-blur-xl border-0 shadow-sm rounded-2xl hover:shadow-md transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.username[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-medium text-gray-900 truncate">{member.username}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="rounded-full">
+                            {member.total_interactions} interactions
+                          </Badge>
+                          <span className="text-xs text-gray-400">
+                            Active {new Date(member.last_active).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="rounded-xl"
+                        onClick={() => {
+                          setSelectedUserId(member.user_id);
+                          setViewMode('personal');
+                        }}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-12 gap-6">
+              {/* Stats Overview */}
+              <div className="col-span-12 grid grid-cols-4 gap-6">
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-blue-50 rounded-xl">
+                        <Users className="h-5 w-5 text-blue-500" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">Total Interactions</p>
+                    <h3 className="text-2xl font-semibold mt-1 text-black">{userData?.total_interactions || 0}</h3>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-green-50 rounded-xl">
+                        <GitBranch className="h-5 w-5 text-green-500" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">Active Channels</p>
+                    <h3 className="text-2xl font-semibold mt-1 text-black">
+                      {new Set(userData?.interactions?.map(i => i.channel_id)).size || 0}
+                    </h3>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-purple-50 rounded-xl">
+                        <Clock className="h-5 w-5 text-purple-500" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">Days Active</p>
+                    <h3 className="text-2xl font-semibold mt-1 text-black">
+                      {Math.round((new Date().getTime() - new Date(userData?.first_interaction || Date.now()).getTime()) / (1000 * 60 * 60 * 24))}
+                    </h3>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-orange-50 rounded-xl">
+                        <Crown className="h-5 w-5 text-orange-500" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">Engagement Rate</p>
+                    <h3 className="text-2xl font-semibold mt-1 text-black">{statsData.prioritized.value}%</h3>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Activity Chart */}
+              <Card className="col-span-8 bg-white border-0 shadow-sm rounded-2xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-base font-medium text-gray-900">Activity Overview</h3>
+                      <p className="text-sm text-gray-500 mt-1">Monthly interaction analytics</p>
+                    </div>
+                  </div>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={focusData}>
+                        <defs>
+                          <linearGradient id="colorInteractions" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                        <XAxis dataKey="name" stroke="#9CA3AF" />
+                        <YAxis hide />
+                        <Tooltip 
+                          contentStyle={{ 
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="interactions" 
+                          stroke="#4F46E5" 
+                          strokeWidth={2}
+                          fill="url(#colorInteractions)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity & Channel Stats */}
+              <div className="col-span-4 space-y-6">
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <h3 className="text-base font-medium text-gray-900 mb-4">Recent Activity</h3>
+                    <div className="space-y-4">
+                      {meetings.slice(0, 3).map((meeting, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-50 rounded-xl">
+                            <FileText className="h-4 w-4 text-gray-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{meeting.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{meeting.date}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <h3 className="text-base font-medium text-gray-900 mb-4">Channel Activity</h3>
+                    <div className="space-y-4">
+                      {developedAreas.slice(0, 4).map((area, index) => (
+                        <div key={index}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-600">{area.name}</span>
+                            <span className="text-sm text-gray-500">{area.progress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out"
+                              style={{ width: `${area.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
