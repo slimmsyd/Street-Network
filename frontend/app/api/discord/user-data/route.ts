@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error('Error fetching user data:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: (error as Error).message },
       { status: 500 }
     );
   }
