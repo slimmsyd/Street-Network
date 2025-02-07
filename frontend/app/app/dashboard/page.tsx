@@ -118,6 +118,9 @@ interface UserData {
   first_interaction: string;
   interactions: UserInteraction[];
   details: UserDetails;
+  username: string;
+  avatar: string;
+  total_interactions: number;
 }
 
 interface FocusDataPoint {
