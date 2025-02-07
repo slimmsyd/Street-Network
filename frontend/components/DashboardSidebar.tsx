@@ -117,7 +117,7 @@ export function DashboardSidebar({
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:block w-64 border-r border-[#DDDDDD] pointer-events-none">
+      <div className="hidden md:block w-64 border-r border-[#DDDDDD]">
         <div className="relative h-full">
           <SidebarContent />
           {activePage === 'nftMint' && (

@@ -13,8 +13,8 @@ import { useRouter, usePathname } from "next/navigation";
 export default function FundingPage() {
   const { data: session } = useSession();
   //We will pull funding from our Solana Wallet
-  const currentFunding = 2000;
-  const memberCount = 170;
+  const currentFunding = 0;
+  const memberCount = 180;
   const targetPerMember = 1000;
   const potentialFunding = memberCount * targetPerMember;
   const remainingToGoal = 170000 - currentFunding;
@@ -190,14 +190,14 @@ export default function FundingPage() {
         </div>
       </main>
 
-      <RightDashboard
+      {/* <RightDashboard
         userName={session?.user?.name || 'Guest'}
         userAvatar={session?.user?.image || ''}
         userRole="Community Member"
         familyMemberCount={0}
         onInvite={() => {}}
         onSendMessage={() => {}}
-      />
+      /> */}
     </div>
   );
 }
