@@ -732,7 +732,7 @@ export default function Dashboard() {
                   display: none;
                 }
               `}</style>
-              <div className="max-w-3xl space-y-6">
+              <div className="max-w-5xl space-y-6">
                 {/* General Section */}
                 <div className="space-y-3">
                   <h2 className="text-lg font-medium text-zinc-800">General</h2>
@@ -2029,7 +2029,7 @@ export default function Dashboard() {
         
         <ResizableHandle withHandle className="hidden md:flex bg-zinc-100 border-l border-r border-zinc-200" />
         
-        <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
+        {/* <ResizablePanel defaultSize={20} minSize={25} maxSize={30} className="hidden md:block">
           <RightDashboard
             userName={userDetails?.user?.name?.split(" ")[0] || "User"}
             userAvatar={userDetails?.user?.profileImage || ""}
@@ -2038,7 +2038,7 @@ export default function Dashboard() {
             onInvite={() => {}}
             onSendMessage={() => {}}
           />
-        </ResizablePanel>
+        </ResizablePanel> */}
       </ResizablePanelGroup>
     </div>
   );
