@@ -245,6 +245,8 @@ export default function Dashboard() {
       }
 
       setUserData(data);
+
+      console.log("Loggin the User Data", data);
       
       // Process interaction data for the focus chart
       const interactionsByMonth: { [key: string]: { count: number, channels: Set<string> } } = {};
@@ -490,7 +492,11 @@ export default function Dashboard() {
                     </div>
                     <p className="text-xs sm:text-sm font-medium text-gray-500">Days Active</p>
                     <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
-                      {Math.round((new Date().getTime() - new Date(userData?.first_interaction || Date.now()).getTime()) / (1000 * 60 * 60 * 24))}
+                      {userData?.interactions?.reduce((uniqueDays, interaction) => {
+                        const day = new Date(interaction.timestamp).toDateString();
+                        uniqueDays.add(day);
+                        return uniqueDays;
+                      }, new Set()).size || 0}
                     </h3>
                   </CardContent>
                 </Card>
