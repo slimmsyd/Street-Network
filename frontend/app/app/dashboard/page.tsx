@@ -450,7 +450,7 @@ export default function Dashboard() {
                 <Button 
                   variant={viewMode === 'members' ? 'default' : 'ghost'} 
                   onClick={() => setViewMode('members')}
-                  className="flex-1 sm:flex-none rounded-lg text-sm px-4"
+                  className="flex-1 sm:flex-none rounded-lg text-sm px-4 text-black"
                   size="sm"
                 >
                   Members
@@ -458,7 +458,7 @@ export default function Dashboard() {
                 <Button 
                   variant={viewMode === 'global' ? 'default' : 'ghost'} 
                   onClick={() => setViewMode('global')}
-                  className="flex-1 sm:flex-none rounded-lg text-sm px-4"
+                  className="flex-1 sm:flex-none rounded-lg text-sm px-4 text-black"
                   size="sm"
                 >
                   Global
