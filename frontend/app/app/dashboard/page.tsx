@@ -174,6 +174,7 @@ export default function Dashboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'personal' | 'members' | 'global'>('personal');
+  const [globalChannelStats, setGlobalChannelStats] = useState<DevelopedArea[]>([]);
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
     userId: userProfile?.user?.id || "unknown",
@@ -197,8 +198,9 @@ export default function Dashboard() {
     setMounted(true);
     fetchMembers();
     if (selectedUserId) {
-      console.log("Fetching data for user:", selectedUserId);
+      // console.log("Fetching data for user:", selectedUserId);
       fetchUserData(selectedUserId);
+      fetchGlobalChannelStats();
     }
   }, [selectedUserId]);
 
@@ -223,7 +225,7 @@ export default function Dashboard() {
         return;
       }
 
-      console.log("Fetching user data for ID:", userId);
+      // console.log("Fetching user data for ID:", userId);
       const response = await fetch(`/api/discord/user-data?userId=${userId}`, {
         // Add cache: 'no-store' to prevent caching
         cache: 'no-store'
@@ -237,7 +239,7 @@ export default function Dashboard() {
       }
 
       const data = await response.json();
-      console.log("Received user data for ID", userId, ":", data);
+      // console.log("Received user data for ID", userId, ":", data);
       
       if (!data || data.error) {
         console.error('No user data found or error:', data.error);
@@ -246,7 +248,7 @@ export default function Dashboard() {
 
       setUserData(data);
 
-      console.log("Loggin the User Data", data);
+      // console.log("Loggin the User Data", data);
       
       // Process interaction data for the focus chart
       const interactionsByMonth: { [key: string]: { count: number, channels: Set<string> } } = {};
@@ -269,26 +271,42 @@ export default function Dashboard() {
       }));
       setFocusData(focusChartData);
 
-      // Process channel statistics using channel_name instead of channel_id
+      // Process personal channel statistics
       const channelCounts = new Map<string, number>();
       data.interactions?.forEach((interaction: UserInteraction) => {
-        // Use channel_name instead of channel_id
         const channelName = interaction.channel_name || interaction.channel_id;
         const count = channelCounts.get(channelName) || 0;
         channelCounts.set(channelName, count + 1);
       });
       
-      // Get top channels
-      const sortedChannels = Array.from(channelCounts.entries())
+      // Get top personal channels
+      const personalChannels = Array.from(channelCounts.entries())
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
         .map(([name, count]) => ({
-          name: name.replace(/[📚🛠️📝-]/g, '').trim(), // Clean up channel name by removing emojis
+          name: name.replace(/[📚🛠️📝-]/g, '').trim(),
           progress: Math.round((count / (data.total_interactions || 1)) * 100)
         }));
       
-      console.log("Processed channel statistics:", sortedChannels);
-      setDevelopedAreas(sortedChannels);
+      setDevelopedAreas(personalChannels);
+
+      // Fetch global channel statistics
+      try {
+        const globalResponse = await fetch('/api/discord/global-channel-stats');
+        const globalData = await globalResponse.json();
+        
+        const globalChannels = globalData.channels
+          .sort((a: any, b: any) => b.total_interactions - a.total_interactions)
+          .slice(0, 5)
+          .map((channel: any) => ({
+            name: channel.name.replace(/[📚🛠️📝-]/g, '').trim(),
+            progress: Math.round((channel.total_interactions / globalData.total_interactions) * 100)
+          }));
+        
+        setGlobalChannelStats(globalChannels);
+      } catch (error) {
+        console.error('Error fetching global channel stats:', error);
+      }
 
       // Process recent activity for meetings section
       const recentActivity = data.interactions
@@ -324,12 +342,77 @@ export default function Dashboard() {
     }
   };
 
+  const fetchGlobalChannelStats = async () => {
+    try {
+      const response = await fetch('/api/discord/global-channel-stats');
+      if (!response.ok) {
+        throw new Error('Failed to fetch global channel stats');
+      }
+      
+      const data = await response.json();
+      // console.log('Global Channel Stats:', data);
+
+      // Transform the data into the format expected by the UI
+      const formattedStats = data.channels
+        .sort((a: any, b: any) => parseFloat(b.percentage) - parseFloat(a.percentage))
+        .slice(0, 5)
+        .map((channel: any) => ({
+          name: channel.name,
+          progress: parseFloat(channel.percentage)
+        }));
+
+      setGlobalChannelStats(formattedStats);
+    } catch (error) {
+      console.error('Error fetching global channel stats:', error);
+    }
+  };
+
   const handleNavigation = (page: string) => {
     router.push(`/app/${page}`);
   };
 
+  const logChannelStats = () => {
+    if (!userData?.interactions) {
+      // console.log("No user data or interactions available");
+      return;
+    }
 
+    // Get all unique channels
+    const allChannels = new Set(userData.interactions.map(i => i.channel_name));
+      // console.log("\n=== All Channels ===");
+    // console.log(Array.from(allChannels));
 
+    // Calculate channel activity
+    const channelActivity = userData.interactions.reduce((acc, interaction) => {
+      const channelName = interaction.channel_name;
+      acc[channelName] = (acc[channelName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Sort channels by activity
+    const sortedChannels = Object.entries(channelActivity)
+      .sort(([, a], [, b]) => b - a)
+      .map(([channel, count]) => ({
+        channel: channel.replace(/[📚🛠️📝-]/g, '').trim(), // Clean up channel name
+        interactions: count,
+        percentage: ((count / userData.interactions.length) * 100).toFixed(1) + '%'
+      }));
+
+    console.log("\n=== Top Channels by Activity ===");
+    console.table(sortedChannels);
+  };
+
+  useEffect(() => {
+    if (userData) {
+      logChannelStats();
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (viewMode === 'global') {
+      fetchGlobalChannelStats();
+    }
+  }, [viewMode]);
 
   if (!mounted) return null;
 
@@ -602,6 +685,126 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* New Channel Rankings Section - Full width */}
+              <div className="col-span-full mt-6">
+                <Card className="bg-white border-0 shadow-sm rounded-2xl overflow-hidden">
+                  <CardHeader className="border-b border-gray-100 bg-gray-50/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-lg text-gray-900">Channel Rankings</CardTitle>
+                        <CardDescription className="text-sm text-gray-500 mt-1">
+                          Engagement distribution across community channels
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-xs border-blue-200 text-blue-600 bg-blue-50">
+                          {new Set(userData?.interactions?.map(i => i.channel_id)).size || 0} Active Channels
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-green-200 text-green-600 bg-green-50">
+                          {userData?.total_interactions || 0} Total Interactions
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Personal Channel Rankings */}
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium text-gray-700">Personal Channel Activity</h4>
+                          <Select defaultValue="7">
+                            <SelectTrigger className="w-[120px] h-8 text-xs">
+                              <SelectValue placeholder="Time Range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="7">Last 7 days</SelectItem>
+                              <SelectItem value="30">Last 30 days</SelectItem>
+                              <SelectItem value="90">Last 90 days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-4">
+                          {developedAreas.map((channel, index) => (
+                            <div key={index} className="relative">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                                    {index + 1}
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-900">{channel.name}</span>
+                                </div>
+                                <span className="text-sm text-gray-600">{channel.progress}%</span>
+                              </div>
+                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${channel.progress}%` }}
+                                  transition={{ duration: 0.5, ease: "easeOut" }}
+                                  className={`h-full rounded-full ${
+                                    index === 0 ? 'bg-blue-500' :
+                                    index === 1 ? 'bg-indigo-500' :
+                                    index === 2 ? 'bg-violet-500' :
+                                    'bg-purple-500'
+                                  }`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Global Channel Rankings */}
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium text-gray-700">Global Channel Activity</h4>
+                          <Badge variant="secondary" className="text-xs">Community-wide</Badge>
+                        </div>
+                        <div className="space-y-4">
+                          {globalChannelStats.map((channel, index) => (
+                            <div key={index} className="relative">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
+                                    index === 0 ? 'bg-amber-100 text-amber-600' :
+                                    index === 1 ? 'bg-gray-100 text-gray-600' :
+                                    index === 2 ? 'bg-orange-100 text-orange-600' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {index + 1}
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-900">{channel.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-gray-600">{channel.progress}%</span>
+                                  {index === 0 && (
+                                    <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-600 border-amber-100">
+                                      Most Active
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${channel.progress}%` }}
+                                  transition={{ duration: 0.5, ease: "easeOut" }}
+                                  className={`h-full rounded-full ${
+                                    index === 0 ? 'bg-amber-500' :
+                                    index === 1 ? 'bg-gray-500' :
+                                    index === 2 ? 'bg-orange-500' :
+                                    'bg-gray-400'
+                                  }`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
