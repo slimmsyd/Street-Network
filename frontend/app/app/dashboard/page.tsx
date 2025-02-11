@@ -541,6 +541,21 @@ export default function Dashboard() {
                 <Card className="bg-white border-0 shadow-sm rounded-2xl">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-purple-50 rounded-xl">
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Total Active Members</p>
+                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
+                      {members.length}
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">Since Feb 6, 2024</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-blue-50 rounded-xl">
                         <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                       </div>
@@ -582,20 +597,6 @@ export default function Dashboard() {
                       }, new Set()).size || 0}
                     </h3>
                     <p className="text-xs text-gray-400 mt-1">Since Feb 6, 2024</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white border-0 shadow-sm rounded-2xl">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="p-2 bg-orange-50 rounded-xl">
-                        <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
-                      </div>
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-500">Engagement Rate</p>
-                    <h3 className="text-xl sm:text-2xl font-semibold mt-1 text-black">
-                      {statsData.prioritized.value}%
-                    </h3>
                   </CardContent>
                 </Card>
               </div>
