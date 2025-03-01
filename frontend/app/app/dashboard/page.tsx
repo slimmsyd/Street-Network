@@ -898,7 +898,7 @@ export default function Dashboard() {
                                 if (active && payload && payload.length) {
                                   return (
                                     <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-100">
-                                      <p className="text-sm font-medium">
+                                      <p className="text-sm font-medium text-gray-900">
                                         {new Date(label).toLocaleDateString(undefined, {
                                           weekday: 'long',
                                           year: 'numeric',
@@ -970,10 +970,10 @@ export default function Dashboard() {
                                   const [year, weekNum] = label.split('-W');
                                   return (
                                     <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-100">
-                                      <p className="text-sm font-medium">
+                                      <p className="text-sm font-medium text-gray-900">
                                         Week {weekNum}, {year}
                                       </p>
-                                      <p className="text-sm text-gray-600">
+                                      <p className="text-sm text-gray-900">
                                         {payload[0].value} total messages
                                       </p>
                                       <p className="text-xs text-gray-500 mt-1">
