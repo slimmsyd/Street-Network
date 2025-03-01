@@ -149,6 +149,47 @@ interface Member {
   last_active: string;
 }
 
+interface UserReport {
+  userSummary: {
+    username: string;
+    totalInteractions: number;
+    activeChannels: number;
+    daysActive: number;
+    firstInteraction: string;
+    lastInteraction: string;
+  };
+  channelActivity: {
+    channelName: string;
+    interactions: number;
+    percentage: number;
+  }[];
+  monthlyActivity: {
+    month: string;
+    interactions: number;
+    channels: number;
+  }[];
+  recentActivity: {
+    timestamp: string;
+    channelName: string;
+    message: string;
+  }[];
+}
+
+interface TimeBasedStats {
+  daily: {
+    date: string;
+    count: number;
+  }[];
+  weekly: {
+    week: string;
+    count: number;
+  }[];
+  growth: {
+    daily: number;
+    weekly: number;
+  };
+}
+
 export default function Dashboard() {
   const { data: session } = useSession();
   const { userProfile, isLoading: profileLoading } = useUserProfile();
@@ -175,6 +216,7 @@ export default function Dashboard() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'personal' | 'members' | 'global'>('personal');
   const [globalChannelStats, setGlobalChannelStats] = useState<DevelopedArea[]>([]);
+  const [timeBasedStats, setTimeBasedStats] = useState<TimeBasedStats | null>(null);
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
     userId: userProfile?.user?.id || "unknown",
@@ -337,6 +379,10 @@ export default function Dashboard() {
         }
       });
 
+      // Calculate time-based analytics
+      const stats = calculateTimeBasedStats(data.interactions || []);
+      setTimeBasedStats(stats);
+
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -414,6 +460,147 @@ export default function Dashboard() {
     }
   }, [viewMode]);
 
+  function generateUserReport(): UserReport | null {
+    if (!userData) return null;
+
+    // Calculate unique days active
+    const uniqueDays = new Set(
+      userData.interactions?.map(i => new Date(i.timestamp).toDateString())
+    );
+
+    // Calculate channel statistics
+    const channelStats = userData.interactions?.reduce((acc, interaction) => {
+      const channelName = interaction.channel_name;
+      acc[channelName] = (acc[channelName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const channelActivity = Object.entries(channelStats || {})
+      .map(([channel, count]) => ({
+        channelName: channel.replace(/[📚🛠️📝-]/g, '').trim(),
+        interactions: count,
+        percentage: Number(((count / (userData.total_interactions || 1)) * 100).toFixed(1))
+      }))
+      .sort((a, b) => b.interactions - a.interactions);
+
+    return {
+      userSummary: {
+        username: userData.username,
+        totalInteractions: userData.total_interactions,
+        activeChannels: new Set(userData.interactions?.map(i => i.channel_id)).size,
+        daysActive: uniqueDays.size,
+        firstInteraction: userData.first_interaction,
+        lastInteraction: userData.details?.last_interaction
+      },
+      channelActivity,
+      monthlyActivity: focusData.map(data => ({
+        month: data.name,
+        interactions: data.interactions,
+        channels: data.channels
+      })),
+      recentActivity: (userData.interactions || [])
+        .slice(-10)
+        .map(interaction => ({
+          timestamp: interaction.timestamp,
+          channelName: interaction.channel_name,
+          message: interaction.message
+        }))
+    };
+  }
+
+  function downloadReport(format: 'json' | 'csv') {
+    const report = generateUserReport();
+    if (!report) return;
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = `user_report_${report.userSummary.username}_${timestamp}`;
+
+    if (format === 'json') {
+      const jsonString = JSON.stringify(report, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.json`;
+      link.click();
+    } else {
+      // Convert to CSV format
+      const csvRows = [];
+      
+      // Add user summary
+      csvRows.push(['User Summary']);
+      Object.entries(report.userSummary).forEach(([key, value]) => {
+        csvRows.push([key, String(value)]);
+      });
+      
+      csvRows.push([]);  // Empty row as separator
+      
+      // Add channel activity
+      csvRows.push(['Channel Activity']);
+      csvRows.push(['Channel Name', 'Interactions', 'Percentage']);
+      report.channelActivity.forEach(channel => {
+        csvRows.push([channel.channelName, String(channel.interactions), `${channel.percentage}%`]);
+      });
+      
+      csvRows.push([]);  // Empty row as separator
+      
+      // Add monthly activity
+      csvRows.push(['Monthly Activity']);
+      csvRows.push(['Month', 'Interactions', 'Active Channels']);
+      report.monthlyActivity.forEach(month => {
+        csvRows.push([month.month, String(month.interactions), String(month.channels)]);
+      });
+      
+      const csvString = csvRows.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.csv`;
+      link.click();
+    }
+  }
+
+  function calculateTimeBasedStats(interactions: UserInteraction[]): TimeBasedStats {
+    // Group by days
+    const dailyStats = interactions.reduce((acc, interaction) => {
+      const date = new Date(interaction.timestamp).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Group by weeks
+    const weeklyStats = interactions.reduce((acc, interaction) => {
+      const date = new Date(interaction.timestamp);
+      const week = `${date.getFullYear()}-W${Math.ceil((date.getDate() + date.getDay()) / 7)}`;
+      acc[week] = (acc[week] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calculate growth
+    const sortedDays = Object.entries(dailyStats)
+      .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime());
+    const sortedWeeks = Object.entries(weeklyStats)
+      .sort(([a], [b]) => b.localeCompare(a));
+
+    const dailyGrowth = sortedDays.length > 1 
+      ? ((sortedDays[0][1] - sortedDays[1][1]) / sortedDays[1][1]) * 100 
+      : 0;
+
+    const weeklyGrowth = sortedWeeks.length > 1 
+      ? ((sortedWeeks[0][1] - sortedWeeks[1][1]) / sortedWeeks[1][1]) * 100 
+      : 0;
+
+    return {
+      daily: Object.entries(dailyStats).map(([date, count]) => ({ date, count })),
+      weekly: Object.entries(weeklyStats).map(([week, count]) => ({ week, count })),
+      growth: {
+        daily: dailyGrowth,
+        weekly: weeklyGrowth
+      }
+    };
+  }
+
   if (!mounted) return null;
 
   return (
@@ -490,6 +677,27 @@ export default function Dashboard() {
                   size="sm"
                 >
                   Global
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadReport('json')}
+                  className="hidden sm:flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Export JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadReport('csv')}
+                  className="hidden sm:flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Export CSV
                 </Button>
               </div>
             </div>
@@ -640,6 +848,163 @@ export default function Dashboard() {
                           />
                         </AreaChart>
                       </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Time-based Analytics */}
+              <div className="col-span-full">
+                <Card className="bg-white border-0 shadow-sm rounded-2xl">
+                  <CardHeader>
+                    <CardTitle
+                    className="text-lg font-medium text-gray-900"
+                    >Interaction Frequency</CardTitle>
+                    <CardDescription>Track your daily and weekly message activity patterns</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Daily Stats */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-medium">Daily Message Count</h4>
+                          <Badge variant="outline" className="text-xs text-gray-500">
+                            Last 7 Days
+                          </Badge>
+                        </div>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={timeBasedStats?.daily.slice(-7) || []}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis 
+                              dataKey="date" 
+                              tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { 
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric'
+                              })} 
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 12 }}
+                              label={{ 
+                                value: 'Messages', 
+                                angle: -90, 
+                                position: 'insideLeft',
+                                fontSize: 12
+                              }}
+                            />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-100">
+                                      <p className="text-sm font-medium">
+                                        {new Date(label).toLocaleDateString(undefined, {
+                                          weekday: 'long',
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric'
+                                        })}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {payload[0].value} messages sent
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Bar 
+                              dataKey="count" 
+                              fill="#4F46E5" 
+                              radius={[4, 4, 0, 0]} 
+                              name="Messages"
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                        <div className="mt-4 flex items-center justify-between">
+                          <div>
+                            <span className="text-sm text-gray-600">Daily Growth Rate</span>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Compared to previous day
+                            </p>
+                          </div>
+                          <Badge variant={timeBasedStats?.growth?.daily > 0 ? "default" : "destructive"}>
+                            {timeBasedStats?.growth?.daily?.toFixed(1) ?? '0'}%
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Weekly Stats */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-medium">Weekly Message Count</h4>
+                          <Badge variant="outline" className="text-xs text-gray-500">
+                            Last 4 Weeks
+                          </Badge>
+                        </div>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={timeBasedStats?.weekly.slice(-4) || []}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis 
+                              dataKey="week" 
+                              tickFormatter={(week) => {
+                                const [year, weekNum] = week.split('-W');
+                                return `Week ${weekNum}`;
+                              }}
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 12 }}
+                              label={{ 
+                                value: 'Messages', 
+                                angle: -90, 
+                                position: 'insideLeft',
+                                fontSize: 12
+                              }}
+                            />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  const [year, weekNum] = label.split('-W');
+                                  return (
+                                    <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-100">
+                                      <p className="text-sm font-medium">
+                                        Week {weekNum}, {year}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {payload[0].value} total messages
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        Weekly activity
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Bar 
+                              dataKey="count" 
+                              fill="#6366F1" 
+                              radius={[4, 4, 0, 0]} 
+                              name="Messages"
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                        <div className="mt-4 flex items-center justify-between">
+                          <div>
+                            <span className="text-sm text-gray-600">Weekly Growth Rate</span>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Compared to previous week
+                            </p>
+                          </div>
+                          <Badge variant={timeBasedStats?.growth?.weekly > 0 ? "default" : "destructive"}>
+                            {timeBasedStats?.growth?.weekly?.toFixed(1) ?? '0'}%
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
