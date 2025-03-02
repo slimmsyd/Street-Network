@@ -37,6 +37,8 @@ import {
   FileVideo,
   Upload,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   ResizableHandle,
@@ -217,6 +219,10 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<'personal' | 'members' | 'global'>('personal');
   const [globalChannelStats, setGlobalChannelStats] = useState<DevelopedArea[]>([]);
   const [timeBasedStats, setTimeBasedStats] = useState<TimeBasedStats | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+  });
 
   const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
     userId: userProfile?.user?.id || "unknown",
@@ -562,22 +568,33 @@ export default function Dashboard() {
   }
 
   function calculateTimeBasedStats(interactions: UserInteraction[]): TimeBasedStats {
+    // Filter interactions for selected month
+    const [year, month] = selectedMonth.split('-');
+    const monthStart = new Date(+year, +month - 1, 1);
+    const monthEnd = new Date(+year, +month, 0);
+
+    const monthlyInteractions = interactions.filter(interaction => {
+      const date = new Date(interaction.timestamp);
+      return date >= monthStart && date <= monthEnd;
+    });
+
     // Group by days
-    const dailyStats = interactions.reduce((acc, interaction) => {
+    const dailyStats = monthlyInteractions.reduce((acc, interaction) => {
       const date = new Date(interaction.timestamp).toISOString().split('T')[0];
       acc[date] = (acc[date] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Group by weeks
-    const weeklyStats = interactions.reduce((acc, interaction) => {
+    const weeklyStats = monthlyInteractions.reduce((acc, interaction) => {
       const date = new Date(interaction.timestamp);
-      const week = `${date.getFullYear()}-W${Math.ceil((date.getDate() + date.getDay()) / 7)}`;
+      const weekNum = Math.ceil((date.getDate() + date.getDay()) / 7);
+      const week = `${date.getFullYear()}-W${weekNum}`;
       acc[week] = (acc[week] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    // Calculate growth
+    // Calculate growth rates
     const sortedDays = Object.entries(dailyStats)
       .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime());
     const sortedWeeks = Object.entries(weeklyStats)
@@ -592,14 +609,21 @@ export default function Dashboard() {
       : 0;
 
     return {
-      daily: Object.entries(dailyStats).map(([date, count]) => ({ date, count })),
-      weekly: Object.entries(weeklyStats).map(([week, count]) => ({ week, count })),
+      daily: sortedDays.map(([date, count]) => ({ date, count })),
+      weekly: sortedWeeks.map(([week, count]) => ({ week, count })),
       growth: {
         daily: dailyGrowth,
         weekly: weeklyGrowth
       }
     };
   }
+
+  useEffect(() => {
+    if (userData?.interactions) {
+      const stats = calculateTimeBasedStats(userData.interactions);
+      setTimeBasedStats(stats);
+    }
+  }, [userData, selectedMonth]);
 
   if (!mounted) return null;
 
@@ -818,6 +842,49 @@ export default function Dashboard() {
                         <h3 className="text-sm sm:text-base font-medium text-gray-900">Activity Overview</h3>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">Monthly interaction analytics</p>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const [year, month] = selectedMonth.split('-');
+                            const prevMonth = new Date(+year, +month - 2);
+                            if (prevMonth >= new Date('2024-02-06')) { // Don't go before Feb 2024
+                              setSelectedMonth(
+                                `${prevMonth.getFullYear()}-${(prevMonth.getMonth() + 1).toString().padStart(2, '0')}`
+                              );
+                            }
+                          }}
+                          disabled={selectedMonth === '2024-02'}
+                          className="h-8 px-2"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium min-w-[100px] text-center">
+                          {new Date(selectedMonth + '-01').toLocaleDateString('en-US', { 
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const [year, month] = selectedMonth.split('-');
+                            const nextMonth = new Date(+year, +month);
+                            const today = new Date();
+                            if (nextMonth <= today) {
+                              setSelectedMonth(
+                                `${nextMonth.getFullYear()}-${(nextMonth.getMonth() + 1).toString().padStart(2, '0')}`
+                              );
+                            }
+                          }}
+                          disabled={selectedMonth === new Date().toISOString().slice(0, 7)}
+                          className="h-8 px-2"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="h-[250px] sm:h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -930,7 +997,7 @@ export default function Dashboard() {
                               Compared to previous day
                             </p>
                           </div>
-                          <Badge variant={timeBasedStats?.growth?.daily > 0 ? "default" : "destructive"}>
+                          <Badge variant={timeBasedStats?.growth?.daily !== undefined && timeBasedStats?.growth?.daily > 0 ? "default" : "destructive"}>
                             {timeBasedStats?.growth?.daily?.toFixed(1) ?? '0'}%
                           </Badge>
                         </div>
@@ -1000,7 +1067,7 @@ export default function Dashboard() {
                               Compared to previous week
                             </p>
                           </div>
-                          <Badge variant={timeBasedStats?.growth?.weekly > 0 ? "default" : "destructive"}>
+                          <Badge variant={timeBasedStats?.growth?.weekly !== undefined && timeBasedStats?.growth?.weekly > 0 ? "default" : "destructive"}>
                             {timeBasedStats?.growth?.weekly?.toFixed(1) ?? '0'}%
                           </Badge>
                         </div>
