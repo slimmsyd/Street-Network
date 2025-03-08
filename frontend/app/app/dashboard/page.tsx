@@ -246,11 +246,11 @@ export default function Dashboard() {
     setMounted(true);
     fetchMembers();
     if (selectedUserId) {
-      // console.log("Fetching data for user:", selectedUserId);
       fetchUserData(selectedUserId);
       fetchGlobalChannelStats();
     }
-  }, [selectedUserId]);
+  }, [selectedUserId, selectedMonth]);
+
 
   const fetchMembers = async () => {
     try {
@@ -302,21 +302,30 @@ export default function Dashboard() {
       const interactionsByMonth: { [key: string]: { count: number, channels: Set<string> } } = {};
       data.interactions?.forEach((interaction: UserInteraction) => {
         const date = new Date(interaction.timestamp);
-        const monthKey = date.toLocaleString('default', { month: 'short' });
-        
-        if (!interactionsByMonth[monthKey]) {
-          interactionsByMonth[monthKey] = { count: 0, channels: new Set() };
+        // Only process interactions for the selected month
+        const [yearStr, monthStr] = selectedMonth.split('-');
+        if (
+          date.getFullYear() === +yearStr && 
+          date.getMonth() === (+monthStr - 1)
+        ) {
+          const dayKey = date.getDate().toString(); // Use day instead of month for more granular view
+          
+          if (!interactionsByMonth[dayKey]) {
+            interactionsByMonth[dayKey] = { count: 0, channels: new Set() };
+          }
+          interactionsByMonth[dayKey].count++;
+          interactionsByMonth[dayKey].channels.add(interaction.channel_id);
         }
-        interactionsByMonth[monthKey].count++;
-        interactionsByMonth[monthKey].channels.add(interaction.channel_id);
       });
 
       // Convert to focus chart data
-      const focusChartData = Object.entries(interactionsByMonth).map(([month, stats]) => ({
-        name: month,
-        interactions: stats.count,
-        channels: stats.channels.size,
-      }));
+      const focusChartData = Object.entries(interactionsByMonth)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b)) // Sort by day
+        .map(([day, stats]) => ({
+          name: `Day ${day}`,
+          interactions: stats.count,
+          channels: stats.channels.size,
+        }));
       setFocusData(focusChartData);
 
       // Process personal channel statistics
@@ -569,9 +578,9 @@ export default function Dashboard() {
 
   function calculateTimeBasedStats(interactions: UserInteraction[]): TimeBasedStats {
     // Filter interactions for selected month
-    const [year, month] = selectedMonth.split('-');
-    const monthStart = new Date(+year, +month - 1, 1);
-    const monthEnd = new Date(+year, +month, 0);
+    const [yearStr, monthStr] = selectedMonth.split('-');
+    const monthStart = new Date(+yearStr, +monthStr - 1, 1);
+    const monthEnd = new Date(+yearStr, +monthStr, 0);
 
     const monthlyInteractions = interactions.filter(interaction => {
       const date = new Date(interaction.timestamp);
@@ -665,7 +674,7 @@ export default function Dashboard() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">
-                  {members.map((member) => (
+                  {Array.isArray(members) ? members.map((member) => (
                     <DropdownMenuItem
                       key={member.user_id}
                       onClick={() => {
@@ -680,7 +689,7 @@ export default function Dashboard() {
                       </Avatar>
                       {member.username}
                     </DropdownMenuItem>
-                  ))}
+                  )) : <DropdownMenuItem>No members found</DropdownMenuItem>}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -729,7 +738,7 @@ export default function Dashboard() {
 
           {viewMode === 'members' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {members.map((member) => (
+              {Array.isArray(members) ? members.map((member) => (
                 <Card key={member.user_id} className="bg-white/80 backdrop-blur-xl border-0 shadow-sm rounded-2xl hover:shadow-md transition-all">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center gap-4">
@@ -764,7 +773,7 @@ export default function Dashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) : <p>No members found</p>}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6">
@@ -847,9 +856,9 @@ export default function Dashboard() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const [year, month] = selectedMonth.split('-');
-                            const prevMonth = new Date(+year, +month - 2);
-                            if (prevMonth >= new Date('2024-02-06')) { // Don't go before Feb 2024
+                            const [yearStr, monthStr] = selectedMonth.split('-');
+                            const prevMonth = new Date(+yearStr, +monthStr - 2, 1);
+                            if (prevMonth >= new Date('2024-02-06')) {
                               setSelectedMonth(
                                 `${prevMonth.getFullYear()}-${(prevMonth.getMonth() + 1).toString().padStart(2, '0')}`
                               );
@@ -870,8 +879,8 @@ export default function Dashboard() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const [year, month] = selectedMonth.split('-');
-                            const nextMonth = new Date(+year, +month);
+                            const [yearStr, monthStr] = selectedMonth.split('-');
+                            const nextMonth = new Date(+yearStr, +monthStr, 1);
                             const today = new Date();
                             if (nextMonth <= today) {
                               setSelectedMonth(
