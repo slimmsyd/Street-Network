@@ -168,20 +168,17 @@ export default function Home() {
 
   // Add this content mapping object at the component level (before the return statement)
   const tabContent = {
-    Valut: {
-      text: "Families can create digital legacies that stand the test of time, ensuring that memories are preserved even as digital technologies evolve. This long-term preservation aspect not only benefits immediate family members but also creates a historical record that can be shared with future generations, fostering a sense of connection to the past.",
+    "Community Wallet": {
+      text: "Pool resources and track collective spending within your community. Our platform enables neighborhoods to visualize their economic power, set spending goals, and measure the impact of redirected dollars to community-owned businesses.",
     },
-    "Data Privacy & Control": {
-      text: "Preserve your family's memories forever with cutting-edge blockchain technology. Powered by Arweave, our platform offers advanced encryption and immutable storage, ensuring your digital legacy remains secure, private, and accessible only to those you trust. Take full control of your memories with unparalleled protection and peace of mind  .",
+    "Economic Analytics": {
+      text: "Gain powerful insights into your community's economic patterns with our advanced analytics tools. Track spending flows, identify leakage points, and discover opportunities to strengthen your local economy through data-driven decision making.",
     },
-    Personalization: {
-      text: "Create a unique family archive that reflects your heritage and values. Customize how you organize and present your family's story with flexible templates, tagging systems, and custom categories that make sense for your family's unique narrative.",
+    "Impact Tracking": {
+      text: "Measure the real-world impact of your economic decisions with our comprehensive tracking tools. See how redirected spending creates jobs, builds wealth, and strengthens community infrastructure through visual reports and impact metrics.",
     },
-    "Collaboration & Engagement": {
-      text: "Bring your family closer with AI-powered collaboration. Our technology intelligently connects the dots—identifying relationships, occupations, birthdays, and locations—to make your family tree more meaningful. Multiple family members can contribute photos, documents, and stories, creating a dynamic, ever-evolvingarchive enriched by each generation's input. ",
-    },
-    "Dynamic Family Tree Visualization": {
-      text: "Build and explore an engaging, interactive map of your lineage that goes beyond static genealogy, fostering deep emotional and relational connections.. ",
+    "Campaign Management": {
+      text: "Organize and manage targeted buycott campaigns that align with your community's values. Set goals, track participation, and measure outcomes with our intuitive campaign management system designed for maximum community engagement.",
     },  
   };
 
@@ -461,201 +458,8 @@ export default function Home() {
 
         <hr className="w-full max-w-[850px] mx-auto border-t border-gray-200 my-8" />
 
-        <section className="w-full bg-white py-24 overflow-x-hidden">
-          <div className="max-w-[1400px] mx-auto px-4">
-            {/* Header and Features Section */}
-        
-            {/* Second row feature updates */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mb-8">
-              <div className="bg-[#E3F2FD] p-8 rounded-3xl">
-                <div className="flex flex-col md:flex-row items-center justify-between">
-                  <div className="max-w-md mb-8 md:mb-0">
-                    <h3 className="text-3xl font-bold text-black mb-4">
-                      Economic Analytics
-                    </h3>
-                    <p className="text-gray-600 !text-[16px] mb-6">
-                      Track spending patterns, measure community impact, and identify opportunities for economic growth and development in your area.
-                    </p>
-                    <Dialog open={betaSignupOpen} onOpenChange={setBetaSignupOpen}>
-                      <DialogTrigger asChild>
-                        <button
-                          className="text-sm font-medium text-white transition-all duration-500 flex items-center justify-center gap-2 px-6 py-3 rounded-full relative overflow-hidden group w-full sm:w-auto transform hover:scale-[1.02]"
-                          style={{
-                            background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
-                            boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
-                          <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
-                            View Analytics
-                          </span>
-                          <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
-                        </button>
-                      </DialogTrigger>
-                    </Dialog>
-                  </div>
-                  <div className="flex justify-center">
-                    <img
-                      src="/home/Analytics.png"
-                      alt="Economic Analytics"
-                      className="w-auto h-48 md:h-[300px] object-contain"
-                      style={{
-                        maxWidth: '400px',
-                        pointerEvents: 'none'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-[#FFF3E0] p-8 rounded-3xl">
-                <div className="flex flex-col md:flex-row items-center justify-between">
-                  <div className="max-w-md mb-8 md:mb-0">
-                    <h3 className="text-3xl font-bold text-black mb-4">
-                      Impact Tracking
-                    </h3>
-                    <p className="text-gray-600 !text-[16px] mb-6">
-                      Monitor the real-world impact of your economic decisions. See how your community's spending choices create positive change.
-                    </p>
-                    <Dialog open={betaSignupOpen} onOpenChange={setBetaSignupOpen}>
-                      <DialogTrigger asChild>
-                        <button
-                          className="text-sm font-medium text-white transition-all duration-500 flex items-center justify-center gap-2 px-6 py-3 rounded-full relative overflow-hidden group w-full sm:w-auto transform hover:scale-[1.02]"
-                          style={{
-                            background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
-                            boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
-                          <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
-                            Track Impact
-                          </span>
-                          <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
-                        </button>
-                      </DialogTrigger>
-                    </Dialog>
-                  </div>
-                  <div className="flex justify-center">
-                    <img
-                      src="/home/ImpactTracking.png"
-                      alt="Impact Tracking"
-                      className="w-auto h-48 md:h-[300px] object-contain"
-                      style={{
-                        maxWidth: '400px',
-                        pointerEvents: 'none'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Features Section */}
-
-
-      <section id="reason" className="w-full mx-auto px-4 py-16 bg-[#F5F5F5]">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16 text-black"
-        >
-          <h2 className="text-7xl font-bold mb-2">Economic Power</h2>
-          <p className="text-gray-500 text-sm">
-            "Economic power is not just about money - it's about building and sustaining our communities."
-          </p>
-          <p className="text-gray-400 text-2xl mt-2">Track. Analyze. Impact.</p>
-        </motion.div>
-
-        {/* Main Content Area */}
-        <div className="flex min-h-[400px] sm:min-h-[600px] gap-4 w-full">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{
-              duration: 0.8,
-              delay: 0.2,
-              ease: "easeOut",
-            }}
-            className="flex-1 w-full max-w-[1400px] mx-auto p-2 sm:p-4"
-          >
-            <div className="relative w-full h-[300px] sm:h-[500px] flex items-center justify-center">
-            <div className="w-full !mt-[120px]">
-              <img
-                src="/home/Dashboard.png"
-                alt="Economic Impact Dashboard"
-                className="w-full rounded-lg h-[300px] sm:h-[500px]"
-                style={{
-                  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)", 
-                  border: "0.5px solid #1F1F1F",
-                  borderRadius: "8px",
-                }}
-              />
-            </div>
-            </div>
-          </motion.div>
-          </div>
-
-        {/* Footer Categories */}
-        <div className="mt-6 md:mt-8 w-full overflow-x-hidden">
-          <div className="flex flex-wrap justify-between items-center w-full max-w-[800px] mx-auto text-black relative px-3">
-            {[
-              "Community Wallet",
-              "Economic Analytics",
-              "Impact Tracking",
-              "Campaign Management",
-            ].map((tab) => (
-              <div
-                key={tab}
-                className="text-center cursor-pointer relative w-[48%] sm:w-auto mb-4 sm:mb-0 px-2"
-                onClick={() => setActiveTab(tab)}
-              >
-                <h3 className="font-semibold text-sm sm:text-base truncate">{tab}</h3>
-                {activeTab === tab && (
-                  <div className="absolute bottom-[-4px] left-0 w-full h-[2px] bg-black" />
-                )}
-              </div>
-            ))}
-            <div className="absolute bottom-[-4px] left-0 w-full h-[2px] bg-gray-300 opacity-30" />
-          </div>
-
-          <p className="text-gray-500 text-sm text-left mt-6 md:mt-8 max-w-[800px] mx-auto px-3">
-            {tabContent[activeTab as keyof typeof tabContent]?.text || 
-             "Track your community's economic impact through our comprehensive dashboard. Monitor spending patterns, organize campaigns, and measure real-world results."}
-          </p>
-
-          <div className="flex justify-start mt-8 max-w-[800px] mx-auto">
-            <Link href="/signup">
-              <button
-                className="text-sm font-medium text-white transition-all duration-500 flex items-center gap-2 px-6 py-2.5 rounded-full relative overflow-hidden group transform hover:scale-[1.02]"
-                style={{
-                  background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
-                  boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                }}
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
-                <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
-                  Join Movement
-                </span>
-                <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
-              </button>
-            </Link>
-          </div>
-
-          {/* Movement Leaderboard Section */}
-          <div className="max-w-[900px] mx-auto mt-20 px-4">
+        <div className="max-w-[900px] mx-auto mt-20 px-4">
             <div className="text-center mb-10">
               <h3 className="text-3xl font-bold text-black mb-3">Movement Leaders</h3>
               <p className="text-gray-500 max-w-[600px] mx-auto">
@@ -663,9 +467,7 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Leaderboard Cards */}
             <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-              {/* Header */}
               <div className="bg-[#F0FFF0] p-4 border-b border-gray-200 flex items-center justify-between">
                 <h4 className="font-semibold text-[#2BAC3E]">Top Contributors</h4>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -674,7 +476,6 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Leaderboard List */}
               <div className="divide-y divide-gray-100">
                 {/* User 1 - Top Contributor */}
                 <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
@@ -838,6 +639,202 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+
+        {/* <section className="w-full bg-white py-24 overflow-x-hidden">
+          <div className="max-w-[1400px] mx-auto px-4">
+        
+            <div className="hidden md:grid md:grid-cols-2 gap-4 mb-8">
+              <div className="bg-[#E3F2FD] p-8 rounded-3xl">
+                <div className="flex flex-col md:flex-row items-center justify-between">
+                  <div className="max-w-md mb-8 md:mb-0">
+                    <h3 className="text-3xl font-bold text-black mb-4">
+                      Economic Analytics
+                    </h3>
+                    <p className="text-gray-600 !text-[16px] mb-6">
+                      Track spending patterns, measure community impact, and identify opportunities for economic growth and development in your area.
+                    </p>
+                    <Dialog open={betaSignupOpen} onOpenChange={setBetaSignupOpen}>
+                      <DialogTrigger asChild>
+                        <button
+                          className="text-sm font-medium text-white transition-all duration-500 flex items-center justify-center gap-2 px-6 py-3 rounded-full relative overflow-hidden group w-full sm:w-auto transform hover:scale-[1.02]"
+                          style={{
+                            background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
+                            boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
+                          <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
+                            View Analytics
+                          </span>
+                          <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
+                        </button>
+                      </DialogTrigger>
+                    </Dialog>
+                  </div>
+                  <div className="flex justify-center">
+                    <img
+                      src="/home/Analytics.png"
+                      alt="Economic Analytics"
+                      className="w-auto h-48 md:h-[300px] object-contain"
+                      style={{
+                        maxWidth: '400px',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+
+
+              
+
+              <div className="bg-[#FFF3E0] p-8 rounded-3xl">
+                <div className="flex flex-col md:flex-row items-center justify-between">
+                  <div className="max-w-md mb-8 md:mb-0">
+                    <h3 className="text-3xl font-bold text-black mb-4">
+                      Impact Tracking
+                    </h3>
+                    <p className="text-gray-600 !text-[16px] mb-6">
+                      Monitor the real-world impact of your economic decisions. See how your community's spending choices create positive change.
+                    </p>
+                    <Dialog open={betaSignupOpen} onOpenChange={setBetaSignupOpen}>
+                      <DialogTrigger asChild>
+                        <button
+                          className="text-sm font-medium text-white transition-all duration-500 flex items-center justify-center gap-2 px-6 py-3 rounded-full relative overflow-hidden group w-full sm:w-auto transform hover:scale-[1.02]"
+                          style={{
+                            background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
+                            boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
+                          <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
+                            Track Impact
+                          </span>
+                          <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
+                        </button>
+                      </DialogTrigger>
+                    </Dialog>
+                  </div>
+                  <div className="flex justify-center">
+                    <img
+                      src="/home/ImpactTracking.png"
+                      alt="Impact Tracking"
+                      className="w-auto h-48 md:h-[300px] object-contain"
+                      style={{
+                        maxWidth: '400px',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section> */}
+      </div>
+
+      {/* Features Section */}
+
+
+      <section id="reason" className="w-full mx-auto px-4 py-16 bg-[#F5F5F5]">
+        {/* <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16 text-black"
+        >
+          <h2 className="text-7xl font-bold mb-2">Economic Power</h2>
+          <p className="text-gray-500 text-sm">
+            "Economic power is not just about money - it's about building and sustaining our communities."
+          </p>
+          <p className="text-gray-400 text-2xl mt-2">Track. Analyze. Impact.</p>
+        </motion.div> */}
+
+        {/* Main Content Area */}
+        {/* <div className="flex min-h-[400px] sm:min-h-[600px] gap-4 w-full">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 0.8,
+              delay: 0.2,
+              ease: "easeOut",
+            }}
+            className="flex-1 w-full max-w-[1400px] mx-auto p-2 sm:p-4"
+          >
+            <div className="relative w-full h-[300px] sm:h-[500px] flex items-center justify-center">
+            <div className="w-full !mt-[120px]">
+              <img
+                src="/home/Dashboard.png"
+                alt="Economic Impact Dashboard"
+                className="w-full rounded-lg h-[300px] sm:h-[500px]"
+                style={{
+                  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)", 
+                  border: "0.5px solid #1F1F1F",
+                  borderRadius: "8px",
+                }}
+              />
+            </div>
+            </div>
+          </motion.div>
+          </div> */}
+
+        <div className="mt-6 md:mt-8 w-full overflow-x-hidden">
+          {/* <div className="flex flex-wrap justify-between items-center w-full max-w-[800px] mx-auto text-black relative px-3">
+            {[
+              "Community Wallet",
+              "Economic Analytics",
+              "Impact Tracking",
+              "Campaign Management",
+            ].map((tab) => (
+              <div
+                key={tab}
+                className="text-center cursor-pointer relative w-[48%] sm:w-auto mb-4 sm:mb-0 px-2"
+                onClick={() => setActiveTab(tab)}
+              >
+                <h3 className="font-semibold text-sm sm:text-base truncate">{tab}</h3>
+                {activeTab === tab && (
+                  <div className="absolute bottom-[-4px] left-0 w-full h-[2px] bg-black" />
+                )}
+              </div>
+            ))}
+            <div className="absolute bottom-[-4px] left-0 w-full h-[2px] bg-gray-300 opacity-30" />
+          </div> */}
+
+          {/* <p className="text-gray-500 text-sm text-left mt-6 md:mt-8 max-w-[800px] mx-auto px-3">
+            {tabContent[activeTab as keyof typeof tabContent]?.text || 
+             "Track your community's economic impact through our comprehensive dashboard. Monitor spending patterns, organize campaigns, and measure real-world results."}
+          </p> */}
+{/* 
+          <div className="flex justify-start mt-8 max-w-[800px] mx-auto">
+            <Link href="/signup">
+              <button
+                className="text-sm font-medium text-white transition-all duration-500 flex items-center gap-2 px-6 py-2.5 rounded-full relative overflow-hidden group transform hover:scale-[1.02]"
+                style={{
+                  background: 'linear-gradient(135deg, #2BAC3E, #1F8A2F)',
+                  boxShadow: '0 2px 20px rgba(43, 172, 62, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(43,172,62,0.3),transparent_60%)]" />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
+                <span className="relative z-10 bg-gradient-to-b from-white to-[#FCFCFC] bg-clip-text text-transparent font-medium">
+                  Join Movement
+                </span>
+                <ArrowRight className="h-4 w-4 relative z-10 text-white transition-transform duration-500 group-hover:translate-x-1" />
+              </button>
+            </Link>
+          </div> */}
+
+     
 
           <footer className="max-w-[900px] mx-auto px-4 py-12 mt-12">
             <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-8 text-white">
